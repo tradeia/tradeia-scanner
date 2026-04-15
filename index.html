@@ -596,13 +596,13 @@ VALE3,72.10,8100000,9800000,22000000,35000000,32000000,2210,-0.80"></textarea>
 <script>
 // ===================== NAVEGAÇÃO =====================
 let currentPage = 'landing';
-function goTo(page) {
+window.goTo = function goTo(page) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.getElementById('page-' + page).classList.add('active');
   currentPage = page;
   window.scrollTo(0,0);
 }
-function showMsg(id, msg, type) {
+window.showMsg = function showMsg(id, msg, type) {
   const el = document.getElementById(id);
   el.textContent = msg;
   el.className = 'auth-msg ' + type;
@@ -612,7 +612,7 @@ let currentUser = null;
 let filtroAtual = 'todos';
 let dadosFiltrados = [];
 
-function enterApp(user) {
+window.enterApp = function enterApp(user) {
   currentUser = user;
   document.getElementById('app-username').textContent = user.nome.split(' ')[0];
   document.getElementById('app-avatar').textContent = user.nome.charAt(0).toUpperCase();
@@ -627,13 +627,13 @@ function enterApp(user) {
     if (user.role === 'admin') { renderUserList(); updateAdminStats(); }
   }
 }
-function showSubPanel(panel, btn) {
+window.showSubPanel = function showSubPanel(panel, btn) {
   if (currentUser && currentUser.status === 'pending' && panel !== 'pending') return;
   showSubPanelRaw(panel);
   document.querySelectorAll('.app-tab').forEach(t => t.classList.remove('active'));
   if (btn) btn.classList.add('active');
 }
-function showSubPanelRaw(panel) {
+window.showSubPanelRaw = function showSubPanelRaw(panel) {
   document.querySelectorAll('.sub-panel').forEach(p => p.classList.remove('active'));
   const el = document.getElementById('sub-' + panel);
   if (el) el.classList.add('active');
@@ -721,7 +721,7 @@ function rowAllHtml(r,i){
   const v=vies(r.score),cor=scoreCor(r.score),sinais=r.detalhes.map(s=>`<span class="sinal-tag ${s.type}">${s.lbl}</span>`).join('');
   return`<tr><td class="rank-num">${i+1}</td><td><span class="ticker">${r.ticker}</span></td><td style="font-family:var(--mono);font-size:12px">R$${r.fechamento.toFixed(2)}</td><td>${varBadge(r.varPct)}</td><td>${razaoCell(r)}</td><td style="font-family:var(--mono);font-size:11px;color:var(--green)">${fmtNum(r.agCompra)}</td><td style="font-family:var(--mono);font-size:11px;color:var(--red)">${fmtNum(r.agVenda)}</td><td style="font-family:var(--mono);font-size:11px;color:var(--green)">${fmtNum(r.voc)}</td><td style="font-family:var(--mono);font-size:11px;color:var(--red)">${fmtNum(r.vov)}</td><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">${fmtNum(r.volume)}</td><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">${r.negocios.toFixed(0)}</td><td><div class="score-bar"><div class="bar-bg"><div class="bar-fill" style="width:${r.score}%;background:${cor}"></div></div><span class="score-num" style="color:${cor}">${r.score}</span></div></td><td><span class="badge ${v.cls}">${v.label}</span></td><td><div class="sinais">${sinais}</div></td></tr>`;
 }
-function filtrar(tipo,btn){
+window.filtrar = function filtrar(tipo,btn){
   filtroAtual=tipo;
   document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('factive'));
   if(btn)btn.classList.add('factive');
