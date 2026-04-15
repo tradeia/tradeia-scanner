@@ -652,26 +652,24 @@ function parseNum(s) {
   return parseFloat(str);
 }
 function parsear(txt) {
-  const primeira = txt.trim().split(/
-?
-/)[0] || '';
-  const nTab = (primeira.match(/	/g)||[]).length;
+  const linhasRaw = txt.trim().split('\n').map(l => l.replace(/\r/g,'')).filter(l => l.trim());
+  const primeira = linhasRaw[0] || '';
+  const nTab = (primeira.match(/\t/g)||[]).length;
   const nPV  = (primeira.match(/;/g)||[]).length;
-  const sep  = nTab >= 7 ? '	' : nPV >= 7 ? ';' : ',';
-  const re   = sep === '	' ? /	/ : new RegExp(sep);
-  const linhas = txt.trim().split(/
-?
-/).map(l => l.trim()).filter(Boolean);
+  const usaTab = nTab >= 7;
+  const usaPV  = nPV >= 7;
+  const linhas = linhasRaw;
   const res = [];
   for (const linha of linhas) {
-    const p = linha.split(re).map(x => x.trim().replace(/^"|"$/g,'').trim());
-    if (p.length < 8) continue;
-    if (isNaN(parseNum(p[1]))) continue;
+    const p = usaTab ? linha.split('\t') : usaPV ? linha.split(';') : linha.split(',');
+    const pp = p.map(x => x.trim().replace(/^"|"$/g,'').trim());
+    if (pp.length < 8) continue;
+    if (isNaN(parseNum(pp[1]))) continue;
     const r = {
-      ticker: p[0].toUpperCase().replace(/[^A-Z0-9]/g,''),
-      fechamento:parseNum(p[1]), agCompra:parseNum(p[2]), agVenda:parseNum(p[3]),
-      voc:parseNum(p[4]), vov:parseNum(p[5]), volume:parseNum(p[6]),
-      negocios:parseNum(p[7]), varPct:p.length>=9?parseNum(p[8]):null
+      ticker: pp[0].toUpperCase().replace(/[^A-Z0-9]/g,''),
+      fechamento:parseNum(pp[1]), agCompra:parseNum(pp[2]), agVenda:parseNum(pp[3]),
+      voc:parseNum(pp[4]), vov:parseNum(pp[5]), volume:parseNum(pp[6]),
+      negocios:parseNum(pp[7]), varPct:pp.length>=9?parseNum(pp[8]):null
     };
     if (!r.ticker) continue;
     if ([r.fechamento,r.agCompra,r.agVenda,r.voc,r.vov,r.volume,r.negocios].some(v=>isNaN(v))) continue;
