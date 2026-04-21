@@ -3,947 +3,826 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Trade IA — Scanner B3</title>
+<title>Scanner B3 v5 — Saldo e Fluxo</title>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Exo+2:wght@300;400;500;600&display=swap');
-:root{
-  --bg:#050810;--bg2:#090d1a;--bg3:#0d1221;--bg4:#111828;--bg5:#161e30;
-  --border:rgba(255,255,255,0.06);--border2:rgba(59,130,246,0.3);
-  --text:#e8edf8;--text2:#8b98b8;--text3:#4a5578;
-  --blue:#3b82f6;--blue2:#1d4ed8;--blue-bg:rgba(59,130,246,0.1);--blue-border:rgba(59,130,246,0.3);
-  --cyan:#06b6d4;--cyan-bg:rgba(6,182,212,0.08);
-  --green:#10b981;--green-bg:rgba(16,185,129,0.1);--green-border:rgba(16,185,129,0.3);
-  --red:#ef4444;--red-bg:rgba(239,68,68,0.1);--red-border:rgba(239,68,68,0.3);
-  --yellow:#f59e0b;--yellow-bg:rgba(245,158,11,0.1);
-  --orange:#f97316;
-  --mono:'Courier New',monospace;
-  --display:'Orbitron',sans-serif;
-  --sans:'Exo 2',sans-serif;
-}
-*{box-sizing:border-box;margin:0;padding:0}
-html,body{height:100%;font-family:var(--sans);background:var(--bg);color:var(--text);line-height:1.6;overflow-x:hidden}
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Sora:wght@300;400;500;600&display=swap');
+  :root {
+    --bg:#0d0f14;--bg2:#13161e;--bg3:#1a1d27;--bg4:#22263a;
+    --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.13);
+    --text:#e8eaf0;--text2:#8890a8;--text3:#555d78;
+    --green:#00e5a0;--green-bg:rgba(0,229,160,0.10);--green-border:rgba(0,229,160,0.25);
+    --red:#ff4d6a;--red-bg:rgba(255,77,106,0.10);--red-border:rgba(255,77,106,0.25);
+    --yellow:#f5c842;--yellow-bg:rgba(245,200,66,0.10);
+    --orange:#ff9500;--orange-bg:rgba(255,149,0,0.10);
+    --mono:'JetBrains Mono',monospace;--sans:'Sora',sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:100vh;line-height:1.6}
+  .header{padding:1.2rem 2rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--bg2);position:sticky;top:0;z-index:100}
+  .logo{display:flex;align-items:center;gap:12px}
+  .logo-icon{width:34px;height:34px;background:var(--orange);border-radius:8px;display:flex;align-items:center;justify-content:center}
+  .logo-icon svg{width:18px;height:18px}
+  .logo-text{font-size:15px;font-weight:600;letter-spacing:-.3px}
+  .logo-sub{font-size:10px;color:var(--text3);font-family:var(--mono);letter-spacing:.8px;text-transform:uppercase}
+  .hora{font-family:var(--mono);font-size:12px;color:var(--text3)}
+  .vtag{font-family:var(--mono);font-size:10px;background:var(--orange-bg);color:var(--orange);border:1px solid rgba(255,149,0,.3);padding:2px 8px;border-radius:4px;margin-left:8px}
+  .tabs{display:flex;gap:4px;padding:.8rem 2rem 0;background:var(--bg2);border-bottom:1px solid var(--border)}
+  .tab{padding:8px 20px;font-size:13px;font-weight:500;color:var(--text2);cursor:pointer;border-bottom:2px solid transparent;transition:all .2s}
+  .tab:hover{color:var(--text)}
+  .tab.active{color:var(--orange);border-bottom-color:var(--orange)}
+  .content{padding:2rem;max-width:1500px;margin:0 auto}
+  .panel{display:none}.panel.active{display:block}
+  .import-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-bottom:1.5rem}
+  @media(max-width:768px){.import-grid{grid-template-columns:1fr}}
+  .card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:1.5rem}
+  .card-title{font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--text3);margin-bottom:1rem}
+  textarea{width:100%;min-height:240px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:var(--mono);font-size:11.5px;padding:12px;resize:vertical;outline:none;transition:border-color .2s;line-height:1.8}
+  textarea:focus{border-color:var(--border2)}
+  textarea::placeholder{color:var(--text3)}
 
-/* ANIMATIONS */
-@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
-@keyframes scanline{0%{transform:translateY(-100%)}100%{transform:translateY(100vh)}}
-@keyframes glow{0%,100%{box-shadow:0 0 20px rgba(59,130,246,.3)}50%{box-shadow:0 0 40px rgba(59,130,246,.6)}}
-@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
-@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+  /* Config panel */
+  .config-box{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:1.25rem;margin-bottom:1rem}
+  .config-title{font-size:11px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:var(--text3);margin-bottom:1rem}
+  .config-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:.8rem}
+  .config-row:last-child{margin-bottom:0}
+  .config-label{font-size:13px;color:var(--text2);flex:1}
+  .config-label small{display:block;font-size:11px;color:var(--text3);margin-top:1px}
+  .config-input{font-family:var(--mono);font-size:13px;background:var(--bg4);border:1px solid var(--border2);border-radius:6px;color:var(--text);padding:5px 10px;width:110px;text-align:right;outline:none}
+  .config-input:focus{border-color:var(--orange)}
+  .config-unit{font-family:var(--mono);font-size:11px;color:var(--text3);margin-left:6px;min-width:28px}
+  .config-toggle{display:flex;gap:4px}
+  .toggle-btn{padding:4px 10px;border-radius:5px;font-size:11px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--text3);font-family:var(--mono);transition:all .15s}
+  .toggle-btn.active{background:var(--orange-bg);color:var(--orange);border-color:rgba(255,149,0,.4)}
 
-/* PAGES */
-.page{display:none;min-height:100vh;animation:fadeUp .4s ease}
-.page.active{display:flex;flex-direction:column}
+  .btn-row{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+  .btn{padding:9px 20px;border-radius:8px;font-family:var(--sans);font-size:13px;font-weight:500;cursor:pointer;border:1px solid var(--border2);background:var(--bg3);color:var(--text);transition:all .15s}
+  .btn:hover{background:var(--bg4);border-color:rgba(255,255,255,.2)}
+  .btn.primary{background:var(--orange);color:#0d0f14;border-color:var(--orange);font-weight:600}
+  .btn.primary:hover{background:#e08500}
+  .btn.danger{background:transparent;border-color:var(--red-border);color:var(--red)}
+  .error-msg{color:var(--red);font-size:12px;margin-top:8px;font-family:var(--mono);display:none;padding:8px 12px;background:var(--red-bg);border:1px solid var(--red-border);border-radius:6px}
+  .warn-msg{color:var(--yellow);font-size:12px;margin-top:8px;font-family:var(--mono);display:none;padding:8px 12px;background:var(--yellow-bg);border:1px solid rgba(245,200,66,.3);border-radius:6px}
+  .format-box{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:1rem;margin-bottom:1rem}
+  .format-box p{font-size:13px;color:var(--text2);margin-bottom:6px;line-height:1.7}
+  .format-box code{display:block;font-family:var(--mono);font-size:11px;background:var(--bg4);padding:8px 10px;border-radius:6px;color:var(--orange);margin:6px 0;word-break:break-all}
+  .step{display:flex;gap:10px;margin-bottom:10px;align-items:flex-start}
+  .step-num{width:20px;height:20px;min-width:20px;background:var(--bg4);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:var(--text2);font-family:var(--mono);margin-top:2px}
+  .step p{font-size:13px;color:var(--text2);line-height:1.6}
 
-/* ===== LANDING PAGE ===== */
-#page-landing{background:var(--bg);position:relative;overflow:hidden}
-.landing-bg{position:fixed;inset:0;pointer-events:none;z-index:0}
-.grid-lines{position:absolute;inset:0;background-image:linear-gradient(rgba(59,130,246,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(59,130,246,.04) 1px,transparent 1px);background-size:60px 60px}
-.glow-orb{position:absolute;border-radius:50%;filter:blur(80px);opacity:.15}
-.orb1{width:600px;height:600px;background:radial-gradient(circle,#3b82f6,transparent);top:-200px;left:-100px}
-.orb2{width:400px;height:400px;background:radial-gradient(circle,#06b6d4,transparent);bottom:-100px;right:-100px}
+  /* Metrics */
+  .metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-bottom:1.5rem}
+  .metric{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:.9rem 1.1rem}
+  .metric-label{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:5px;font-weight:500}
+  .metric-value{font-size:22px;font-weight:600;font-family:var(--mono);color:var(--text);line-height:1}
+  .metric-value.up{color:var(--green)}.metric-value.down{color:var(--red)}
+  .metric-value.yellow{color:var(--yellow)}.metric-value.orange{color:var(--orange)}
 
-.landing-nav{position:relative;z-index:10;padding:1.5rem 3rem;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border)}
-.nav-logo{display:flex;align-items:center;gap:12px}
-.nav-logo-svg{width:44px;height:44px}
-.nav-brand{font-family:var(--display);font-size:18px;font-weight:700;letter-spacing:2px}
-.nav-brand span{color:var(--blue)}
-.nav-links{display:flex;gap:8px}
-.nav-btn{padding:8px 20px;border-radius:8px;font-family:var(--sans);font-size:13px;font-weight:500;cursor:pointer;transition:all .2s;border:1px solid var(--border2);background:transparent;color:var(--text)}
-.nav-btn:hover{background:var(--blue-bg)}
-.nav-btn.solid{background:var(--blue);color:#fff;border-color:var(--blue)}
-.nav-btn.solid:hover{background:var(--blue2)}
+  /* Tables */
+  .ranking-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-bottom:1.5rem}
+  @media(max-width:900px){.ranking-grid{grid-template-columns:1fr}}
+  .table-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+  .table-header{padding:.9rem 1.25rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+  .table-header-dot{width:8px;height:8px;border-radius:50%}
+  .table-title{font-size:13px;font-weight:600}
+  .table-count{margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--text3);background:var(--bg4);padding:2px 8px;border-radius:4px}
+  table{width:100%;border-collapse:collapse;font-size:12px}
+  thead{background:var(--bg3)}
+  th{text-align:left;padding:7px 10px;font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.7px;white-space:nowrap}
+  td{padding:8px 10px;border-bottom:1px solid var(--border);color:var(--text);vertical-align:middle}
+  tr:last-child td{border-bottom:none}
+  tr:hover td{background:rgba(255,255,255,.02)}
+  .ticker{font-family:var(--mono);font-weight:600;font-size:13px}
+  .rank-num{font-family:var(--mono);font-size:11px;color:var(--text3);width:22px;text-align:center}
+  .badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;font-family:var(--mono);letter-spacing:.5px;white-space:nowrap}
+  .badge-up{background:var(--green-bg);color:var(--green);border:1px solid var(--green-border)}
+  .badge-down{background:var(--red-bg);color:var(--red);border:1px solid var(--red-border)}
+  .badge-neut{background:var(--bg4);color:var(--text3);border:1px solid var(--border)}
+  .score-bar{display:flex;align-items:center;gap:8px}
+  .bar-bg{flex:1;height:4px;background:var(--bg4);border-radius:2px;overflow:hidden;min-width:50px}
+  .bar-fill{height:100%;border-radius:2px}
+  .score-num{font-family:var(--mono);font-size:12px;font-weight:600;min-width:26px;text-align:right}
+  .sinais{font-size:10px;font-family:var(--mono);color:var(--text3);display:flex;flex-wrap:wrap;gap:3px}
+  .sinal-tag{background:var(--bg4);padding:1px 5px;border-radius:3px;border:1px solid var(--border)}
+  .sinal-tag.buy{border-color:var(--green-border);color:var(--green)}
+  .sinal-tag.sell{border-color:var(--red-border);color:var(--red)}
+  .all-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:1.5rem}
+  .all-header{padding:.9rem 1.25rem;border-bottom:1px solid var(--border);font-size:13px;font-weight:600;color:var(--text2);display:flex;align-items:center;justify-content:space-between}
+  .filter-row{display:flex;gap:8px;padding:10px 1.25rem;border-bottom:1px solid var(--border);background:var(--bg3);flex-wrap:wrap;align-items:center}
+  .filter-label{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.7px}
+  .filter-btn{padding:4px 12px;border-radius:5px;font-size:11px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--text2);font-family:var(--mono);transition:all .15s}
+  .filter-btn:hover,.filter-btn.active{background:var(--bg4);color:var(--text);border-color:var(--border2)}
+  .filter-btn.f-up.active{color:var(--green);border-color:var(--green-border);background:var(--green-bg)}
+  .filter-btn.f-down.active{color:var(--red);border-color:var(--red-border);background:var(--red-bg)}
+  .tbl-scroll{overflow-x:auto}
+  .razao-bar{display:flex;align-items:center;gap:6px}
+  .razao-wrap{width:80px;height:6px;background:var(--bg4);border-radius:3px;overflow:hidden;position:relative}
+  .razao-fill{position:absolute;left:0;top:0;height:100%;border-radius:3px;transition:width .3s}
 
-.landing-hero{position:relative;z-index:5;flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:4rem 2rem}
-.hero-badge{display:inline-flex;align-items:center;gap:8px;background:var(--blue-bg);border:1px solid var(--blue-border);border-radius:100px;padding:6px 16px;font-size:12px;color:var(--blue);font-family:var(--mono);letter-spacing:1px;margin-bottom:2rem;animation:float 4s ease-in-out infinite}
-.hero-badge-dot{width:6px;height:6px;background:var(--blue);border-radius:50%;animation:pulse 1.5s infinite}
-.hero-title{font-family:var(--display);font-size:clamp(2.5rem,6vw,5rem);font-weight:900;line-height:1.1;letter-spacing:-1px;margin-bottom:1.5rem}
-.hero-title span{color:var(--blue)}
-.hero-title .ia{background:linear-gradient(135deg,var(--blue),var(--cyan));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
-.hero-sub{font-size:1.1rem;color:var(--text2);max-width:560px;margin:0 auto 3rem;line-height:1.8}
-.hero-ctas{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
-.cta-primary{padding:14px 36px;background:var(--blue);color:#fff;border:none;border-radius:10px;font-family:var(--sans);font-size:15px;font-weight:600;cursor:pointer;transition:all .2s;letter-spacing:.3px}
-.cta-primary:hover{background:var(--blue2);transform:translateY(-2px);box-shadow:0 8px 30px rgba(59,130,246,.4)}
-.cta-secondary{padding:14px 36px;background:transparent;color:var(--text);border:1px solid var(--border2);border-radius:10px;font-family:var(--sans);font-size:15px;font-weight:500;cursor:pointer;transition:all .2s}
-.cta-secondary:hover{background:var(--blue-bg)}
-
-.hero-stats{display:flex;gap:3rem;justify-content:center;margin-top:4rem;flex-wrap:wrap}
-.stat{text-align:center}
-.stat-num{font-family:var(--display);font-size:2rem;font-weight:700;color:var(--blue)}
-.stat-label{font-size:12px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-top:2px}
-
-.features{position:relative;z-index:5;display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1px;background:var(--border);border-top:1px solid var(--border)}
-.feature{background:var(--bg);padding:2.5rem 2rem;transition:background .2s}
-.feature:hover{background:var(--bg2)}
-.feature-icon{font-size:28px;margin-bottom:1rem}
-.feature-title{font-size:14px;font-weight:600;margin-bottom:.5rem;color:var(--text)}
-.feature-desc{font-size:13px;color:var(--text2);line-height:1.7}
-
-.landing-footer{position:relative;z-index:5;padding:2rem 3rem;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem}
-.footer-brand{font-family:var(--display);font-size:13px;color:var(--text3);letter-spacing:1px}
-.footer-links{display:flex;gap:1.5rem;align-items:center}
-.footer-link{font-size:13px;color:var(--text3);text-decoration:none;transition:color .2s;cursor:pointer}
-.footer-link:hover{color:var(--blue)}
-.footer-contact{font-size:12px;color:var(--text3);font-family:var(--mono)}
-
-/* ===== AUTH PAGES ===== */
-#page-login,#page-register{background:var(--bg);justify-content:center;align-items:center;min-height:100vh;position:relative;overflow:hidden}
-.auth-bg{position:fixed;inset:0;pointer-events:none}
-.auth-card{position:relative;z-index:10;background:var(--bg2);border:1px solid var(--border2);border-radius:20px;padding:3rem;width:100%;max-width:440px;animation:fadeUp .4s ease}
-.auth-logo{text-align:center;margin-bottom:2rem}
-.auth-logo-svg{width:60px;height:60px;margin:0 auto 1rem}
-.auth-brand{font-family:var(--display);font-size:22px;font-weight:700;letter-spacing:2px}
-.auth-brand span{color:var(--blue)}
-.auth-title{font-size:14px;color:var(--text3);margin-top:4px;font-family:var(--mono);letter-spacing:.5px}
-.auth-form{display:flex;flex-direction:column;gap:16px}
-.form-group{display:flex;flex-direction:column;gap:6px}
-.form-label{font-size:12px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.8px}
-.form-input{background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:var(--sans);font-size:14px;padding:11px 14px;outline:none;transition:border-color .2s}
-.form-input:focus{border-color:var(--blue)}
-.form-input::placeholder{color:var(--text3)}
-.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.btn-auth{padding:13px;background:var(--blue);color:#fff;border:none;border-radius:10px;font-family:var(--sans);font-size:15px;font-weight:600;cursor:pointer;transition:all .2s;margin-top:4px;letter-spacing:.3px}
-.btn-auth:hover{background:var(--blue2);transform:translateY(-1px)}
-.auth-switch{text-align:center;font-size:13px;color:var(--text3);margin-top:1rem}
-.auth-switch a{color:var(--blue);cursor:pointer;text-decoration:none}
-.auth-switch a:hover{text-decoration:underline}
-.auth-msg{padding:10px 14px;border-radius:8px;font-size:13px;margin-top:8px;display:none;font-family:var(--mono)}
-.auth-msg.error{background:var(--red-bg);color:var(--red);border:1px solid var(--red-border)}
-.auth-msg.success{background:var(--green-bg);color:var(--green);border:1px solid var(--green-border)}
-.auth-msg.warn{background:var(--yellow-bg);color:var(--yellow);border:1px solid rgba(245,158,11,.3)}
-
-/* ===== APP (after login) ===== */
-#page-app{flex-direction:column;background:var(--bg)}
-.app-header{padding:0 2rem;height:58px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--bg2);position:sticky;top:0;z-index:100}
-.app-logo{display:flex;align-items:center;gap:10px}
-.app-logo-svg{width:32px;height:32px}
-.app-brand{font-family:var(--display);font-size:14px;font-weight:700;letter-spacing:1.5px}
-.app-brand span{color:var(--blue)}
-.app-nav{display:flex;gap:4px}
-.app-tab{padding:6px 16px;border-radius:6px;font-size:13px;font-weight:500;cursor:pointer;border:none;background:transparent;color:var(--text2);transition:all .15s;font-family:var(--sans)}
-.app-tab:hover{color:var(--text);background:var(--bg3)}
-.app-tab.active{color:var(--blue);background:var(--blue-bg)}
-.app-tab.admin-tab{color:var(--yellow)}
-.app-tab.admin-tab.active{background:var(--yellow-bg);color:var(--yellow)}
-.app-user{display:flex;align-items:center;gap:10px}
-.user-name{font-size:13px;color:var(--text2)}
-.user-avatar{width:32px;height:32px;border-radius:50%;background:var(--blue);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:#fff}
-.btn-logout{padding:5px 14px;border:1px solid var(--border);border-radius:6px;background:transparent;color:var(--text3);font-size:12px;cursor:pointer;font-family:var(--sans);transition:all .15s}
-.btn-logout:hover{border-color:var(--red-border);color:var(--red)}
-
-.app-content{flex:1;padding:2rem;max-width:1500px;width:100%;margin:0 auto}
-.sub-panel{display:none}.sub-panel.active{display:block}
-
-/* SCANNER (same as v3) */
-.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-bottom:1.5rem}
-.metric{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:.9rem 1.1rem}
-.metric-label{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:5px;font-weight:500}
-.metric-value{font-size:22px;font-weight:600;font-family:var(--mono);color:var(--text);line-height:1}
-.metric-value.up{color:var(--green)}.metric-value.down{color:var(--red)}
-.metric-value.yellow{color:var(--yellow)}.metric-value.blue{color:var(--blue)}
-.ranking-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-bottom:1.5rem}
-@media(max-width:900px){.ranking-grid{grid-template-columns:1fr}}
-.table-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;overflow:hidden}
-.table-header{padding:.9rem 1.25rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
-.table-dot{width:8px;height:8px;border-radius:50%}
-.table-title{font-size:13px;font-weight:600}
-.table-count{margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--text3);background:var(--bg3);padding:2px 8px;border-radius:4px}
-table{width:100%;border-collapse:collapse;font-size:12px}
-thead{background:var(--bg3)}
-th{text-align:left;padding:7px 10px;font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.7px;white-space:nowrap}
-td{padding:8px 10px;border-bottom:1px solid var(--border);color:var(--text);vertical-align:middle}
-tr:last-child td{border-bottom:none}
-tr:hover td{background:rgba(255,255,255,.02)}
-.ticker{font-family:var(--mono);font-weight:600;font-size:13px}
-.rank-num{font-family:var(--mono);font-size:11px;color:var(--text3);width:22px;text-align:center}
-.badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;font-family:var(--mono);letter-spacing:.5px;white-space:nowrap}
-.badge-up{background:var(--green-bg);color:var(--green);border:1px solid var(--green-border)}
-.badge-down{background:var(--red-bg);color:var(--red);border:1px solid var(--red-border)}
-.badge-neut{background:var(--bg4);color:var(--text3);border:1px solid var(--border)}
-.score-bar{display:flex;align-items:center;gap:8px}
-.bar-bg{flex:1;height:4px;background:var(--bg4);border-radius:2px;overflow:hidden;min-width:50px}
-.bar-fill{height:100%;border-radius:2px}
-.score-num{font-family:var(--mono);font-size:12px;font-weight:600;min-width:26px;text-align:right}
-.sinais{font-size:10px;font-family:var(--mono);color:var(--text3);display:flex;flex-wrap:wrap;gap:3px}
-.sinal-tag{background:var(--bg4);padding:1px 5px;border-radius:3px;border:1px solid var(--border)}
-.sinal-tag.buy{border-color:var(--green-border);color:var(--green)}
-.sinal-tag.sell{border-color:var(--red-border);color:var(--red)}
-.all-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:1.5rem}
-.all-header{padding:.9rem 1.25rem;border-bottom:1px solid var(--border);font-size:13px;font-weight:600;color:var(--text2);display:flex;align-items:center;justify-content:space-between}
-.filter-row{display:flex;gap:8px;padding:10px 1.25rem;border-bottom:1px solid var(--border);background:var(--bg3);flex-wrap:wrap;align-items:center}
-.filter-label{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.7px}
-.filter-btn{padding:4px 12px;border-radius:5px;font-size:11px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--text2);font-family:var(--mono);transition:all .15s}
-.filter-btn:hover,.filter-btn.factive{background:var(--bg4);color:var(--text);border-color:var(--border2)}
-.filter-btn.f-up.factive{color:var(--green);border-color:var(--green-border);background:var(--green-bg)}
-.filter-btn.f-down.factive{color:var(--red);border-color:var(--red-border);background:var(--red-bg)}
-.tbl-scroll{overflow-x:auto}
-.razao-bar{display:flex;align-items:center;gap:6px}
-.razao-wrap{width:70px;height:5px;background:var(--bg4);border-radius:3px;overflow:hidden;position:relative}
-.razao-fill{position:absolute;left:0;top:0;height:100%;border-radius:3px}
-
-/* ADMIN */
-.admin-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-bottom:1.5rem}
-@media(max-width:768px){.admin-grid{grid-template-columns:1fr}}
-.admin-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:1.5rem}
-.admin-card-title{font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--text3);margin-bottom:1.2rem;display:flex;align-items:center;gap:8px}
-.admin-card-title span{font-size:16px}
-textarea.admin-input{width:100%;min-height:180px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:var(--mono);font-size:11.5px;padding:12px;resize:vertical;outline:none;transition:border-color .2s;line-height:1.8}
-textarea.admin-input:focus{border-color:var(--blue)}
-textarea.admin-input::placeholder{color:var(--text3)}
-.config-box{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:1.1rem;margin-bottom:.8rem}
-.config-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:.7rem}
-.config-row:last-child{margin-bottom:0}
-.config-label{font-size:13px;color:var(--text2);flex:1}
-.config-label small{display:block;font-size:11px;color:var(--text3);margin-top:1px}
-.config-input{font-family:var(--mono);font-size:13px;background:var(--bg4);border:1px solid var(--border2);border-radius:6px;color:var(--text);padding:5px 10px;width:100px;text-align:right;outline:none}
-.config-input:focus{border-color:var(--blue)}
-.config-unit{font-family:var(--mono);font-size:11px;color:var(--text3);margin-left:6px;min-width:28px}
-.btn-row{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
-.btn{padding:9px 20px;border-radius:8px;font-family:var(--sans);font-size:13px;font-weight:500;cursor:pointer;border:1px solid var(--border2);background:var(--bg3);color:var(--text);transition:all .15s}
-.btn:hover{background:var(--bg4)}
-.btn.primary{background:var(--blue);color:#fff;border-color:var(--blue);font-weight:600}
-.btn.primary:hover{background:var(--blue2)}
-.btn.success{background:var(--green);color:#fff;border-color:var(--green);font-weight:600}
-.btn.danger-btn{background:transparent;border-color:var(--red-border);color:var(--red)}
-.error-msg{color:var(--red);font-size:12px;margin-top:8px;font-family:var(--mono);display:none;padding:8px 12px;background:var(--red-bg);border:1px solid var(--red-border);border-radius:6px}
-.warn-msg{color:var(--yellow);font-size:12px;margin-top:8px;font-family:var(--mono);display:none;padding:8px 12px;background:var(--yellow-bg);border:1px solid rgba(245,158,11,.3);border-radius:6px}
-.info-msg{color:var(--blue);font-size:12px;margin-top:8px;font-family:var(--mono);display:none;padding:8px 12px;background:var(--blue-bg);border:1px solid var(--blue-border);border-radius:6px}
-
-/* User management */
-.user-table-wrap{max-height:320px;overflow-y:auto}
-.user-row{display:flex;align-items:center;gap:12px;padding:10px 14px;border-bottom:1px solid var(--border);transition:background .15s}
-.user-row:last-child{border-bottom:none}
-.user-row:hover{background:var(--bg3)}
-.user-avatar-sm{width:32px;height:32px;border-radius:50%;background:var(--blue-bg);border:1px solid var(--blue-border);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:var(--blue);flex-shrink:0}
-.user-info{flex:1;min-width:0}
-.user-info-name{font-size:13px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.user-info-email{font-size:11px;color:var(--text3);font-family:var(--mono)}
-.user-status{font-size:10px;font-weight:600;font-family:var(--mono);padding:2px 8px;border-radius:4px}
-.status-active{background:var(--green-bg);color:var(--green);border:1px solid var(--green-border)}
-.status-pending{background:var(--yellow-bg);color:var(--yellow);border:1px solid rgba(245,158,11,.3)}
-.user-actions{display:flex;gap:6px}
-.user-action-btn{padding:4px 10px;border-radius:5px;font-size:11px;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--text2);font-family:var(--mono);transition:all .15s}
-.user-action-btn:hover{background:var(--bg4)}
-.user-action-btn.approve{border-color:var(--green-border);color:var(--green)}
-.user-action-btn.remove{border-color:var(--red-border);color:var(--red)}
-
-/* GUIA */
-.guide-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1.5rem}
-.guide-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:1.5rem}
-.guide-card h3{font-size:14px;font-weight:600;margin-bottom:1rem;color:var(--text);display:flex;align-items:center;gap:8px}
-.guide-icon{width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:14px;background:var(--bg4);flex-shrink:0}
-.guide-card p,.guide-card li{font-size:13px;color:var(--text2);line-height:1.8}
-.guide-card ul{padding-left:1.2rem}
-.ind-row{display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)}
-.ind-row:last-child{border-bottom:none}
-.ind-pts{font-family:var(--mono);font-size:14px;font-weight:600;color:var(--blue);min-width:36px;padding-top:1px}
-.ind-info p{font-size:13px;font-weight:500;color:var(--text);margin-bottom:1px}
-.ind-info span{font-size:11px;color:var(--text3)}
-.highlight-box{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:.9rem;margin-top:.8rem}
-.highlight-box p{font-size:12px;color:var(--text2);line-height:1.7;margin:0}
-
-/* FILTER INFO */
-.filter-info{font-family:var(--mono);font-size:11px;color:var(--text3);margin-bottom:12px;padding:8px 14px;background:var(--bg3);border-radius:6px;border:1px solid var(--border);display:none}
-
-/* Pending notice */
-.pending-notice{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;text-align:center;gap:1rem}
-.pending-icon{font-size:64px;animation:float 3s ease-in-out infinite}
-.pending-title{font-family:var(--display);font-size:22px;font-weight:700;color:var(--yellow)}
-.pending-sub{font-size:14px;color:var(--text2);max-width:400px;line-height:1.7}
-
-/* LOGO SVG inline */
-.logo-svg-el{display:block}
+  /* Guide */
+  .guide-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1.5rem}
+  .guide-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:1.5rem}
+  .guide-card h3{font-size:14px;font-weight:600;margin-bottom:1rem;color:var(--text);display:flex;align-items:center;gap:8px}
+  .guide-icon{width:24px;height:24px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:13px;background:var(--bg4)}
+  .guide-card p,.guide-card li{font-size:13px;color:var(--text2);line-height:1.8}
+  .guide-card ul{padding-left:1.2rem}
+  .ind-row{display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)}
+  .ind-row:last-child{border-bottom:none}
+  .ind-pts{font-family:var(--mono);font-size:14px;font-weight:600;color:var(--orange);min-width:36px;padding-top:1px}
+  .ind-info p{font-size:13px;font-weight:500;color:var(--text);margin-bottom:1px}
+  .ind-info span{font-size:11px;color:var(--text3)}
+  .highlight-box{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:.9rem;margin-top:.8rem}
+  .highlight-box p{font-size:12px;color:var(--text2);line-height:1.7;margin:0}
+  .footer{padding:.9rem 2rem;border-top:1px solid var(--border);text-align:center;font-size:11px;color:var(--text3);font-family:var(--mono);background:var(--bg2)}
+  .footer span{color:var(--orange)}
+  .removed-badge{font-family:var(--mono);font-size:10px;background:var(--red-bg);color:var(--red);border:1px solid var(--red-border);padding:1px 6px;border-radius:3px;margin-left:4px}
 </style>
 </head>
 <body>
 
-<!-- ============================= LANDING PAGE ============================= -->
-<div id="page-landing" class="page active">
-  <div class="landing-bg">
-    <div class="grid-lines"></div>
-    <div class="glow-orb orb1"></div>
-    <div class="glow-orb orb2"></div>
-  </div>
-
-  <nav class="landing-nav">
-    <div class="nav-logo">
-      <img id="logo-img-nav" src="logo_ia.png" alt="Trade IA" style="height:44px;width:auto;object-fit:contain" onerror="this.style.display='none';document.getElementById('logo-svg-nav').style.display='flex'">
-      <svg id="logo-svg-nav" class="nav-logo-svg" viewBox="0 0 44 44" fill="none" style="display:none">
-        <rect width="44" height="44" rx="10" fill="#1d4ed8"/>
-        <path d="M8 32 L14 20 L20 25 L26 15 L32 19 L36 10" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-        <circle cx="36" cy="10" r="2.5" fill="#06b6d4"/>
-        <rect x="8" y="34" width="28" height="2" rx="1" fill="rgba(255,255,255,0.3)"/>
+<div class="header">
+  <div class="logo">
+    <div class="logo-icon">
+      <svg viewBox="0 0 18 18" fill="none">
+        <path d="M2 14 L5 9 L8 11 L11 6 L14 8 L16 4" stroke="#0d0f14" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="16" cy="4" r="1.5" fill="#0d0f14"/>
       </svg>
-      <div id="nav-brand-text">
-        <div class="nav-brand">TRADE <span>IA</span></div>
+    </div>
+    <div>
+      <div style="display:flex;align-items:center;gap:6px">
+        <span class="logo-text">Scanner B3</span>
+        <span class="vtag">v5 — Saldo Teórico</span>
       </div>
-    </div>
-    <div class="nav-links">
-      <button class="nav-btn" onclick="goTo('login')">Entrar</button>
-      <button class="nav-btn solid" onclick="goTo('register')">Cadastrar</button>
-    </div>
-  </nav>
-
-  <div class="landing-hero">
-    <div class="hero-badge"><span class="hero-badge-dot"></span>Scanner B3 · Leilão de Fechamento</div>
-    <h1 class="hero-title">Inteligência de <span class="ia">Fluxo</span><br>para o <span>Leilão B3</span></h1>
-    <p class="hero-sub">Análise de agressão, VOC/VOV e saldo em tempo real. Identifique os Top 10 de compra e venda antes do leilão de fechamento.</p>
-    <div class="hero-ctas">
-      <button class="cta-primary" onclick="goTo('register')">Criar conta grátis</button>
-      <button class="cta-secondary" onclick="goTo('login')">Já tenho conta</button>
-    </div>
-    <div class="hero-stats">
-      <div class="stat"><div class="stat-num">5</div><div class="stat-label">Indicadores de Fluxo</div></div>
-      <div class="stat"><div class="stat-num">180+</div><div class="stat-label">Ações analisadas</div></div>
-      <div class="stat"><div class="stat-num">100%</div><div class="stat-label">Baseado em agressão</div></div>
+      <div class="logo-sub">Saldo Teórico · VOC/VOV · Leilão</div>
     </div>
   </div>
-
-  <div class="features">
-    <div class="feature"><div class="feature-icon">⚡</div><div class="feature-title">Razão de Agressão</div><div class="feature-desc">Score baseado em Ag.Compra vs Ag.Venda em %, eliminando distorções de volume entre ativos.</div></div>
-    <div class="feature"><div class="feature-icon">📊</div><div class="feature-title">VOC e VOV</div><div class="feature-desc">Saldo do book de ofertas em tempo real — veja quem está com mais pressão no leilão.</div></div>
-    <div class="feature"><div class="feature-icon">🔍</div><div class="feature-title">Filtro de Liquidez</div><div class="feature-desc">Filtra ações ilíquidas automaticamente. Só analisa o que você consegue executar no leilão.</div></div>
-    <div class="feature"><div class="feature-icon">🏆</div><div class="feature-title">Top 10 Ranqueados</div><div class="feature-desc">Os melhores candidatos de compra e venda para o leilão, prontos para execução.</div></div>
-  </div>
-
-  <footer class="landing-footer">
-    <div class="footer-brand">TRADE IA © 2025</div>
-    <div class="footer-links">
-      <span class="footer-link" onclick="window.open('https://instagram.com/trade_ia','_blank')">📸 @trade_ia</span>
-      <span class="footer-contact">📱 (11) 99577-8307</span>
-      <span class="footer-contact">💬 WhatsApp</span>
-    </div>
-  </footer>
+  <div class="hora" id="horaAtual"></div>
 </div>
 
-<!-- ============================= LOGIN ============================= -->
-<div id="page-login" class="page">
-  <div class="auth-bg">
-    <div class="grid-lines"></div>
-    <div class="glow-orb orb1" style="opacity:.08"></div>
-  </div>
-  <div class="auth-card">
-    <div class="auth-logo">
-      <img src="logo_ia.png" alt="Trade IA" style="height:80px;width:auto;object-fit:contain;margin:0 auto 1rem;display:block" onerror="this.style.display='none'">
-      <div class="auth-brand">TRADE <span>IA</span></div>
-      <div class="auth-title">SCANNER B3 — ACESSO</div>
-    </div>
-    <div class="auth-form">
-      <div class="form-group">
-        <label class="form-label">Email</label>
-        <input class="form-input" id="login-email" type="email" placeholder="seu@email.com">
-      </div>
-      <div class="form-group">
-        <label class="form-label">Senha</label>
-        <input class="form-input" id="login-senha" type="password" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()">
-      </div>
-      <div class="auth-msg" id="login-msg"></div>
-      <button class="btn-auth" onclick="doLogin()">Entrar na plataforma</button>
-    </div>
-    <div class="auth-switch">Não tem conta? <a onclick="goTo('register')">Cadastre-se grátis</a></div>
-    <div class="auth-switch" style="margin-top:6px"><a onclick="goTo('landing')" style="color:var(--text3)">← Voltar ao início</a></div>
-  </div>
+<div class="tabs">
+  <div class="tab active" onclick="showPanel('import')">Importar dados</div>
+  <div class="tab" onclick="showPanel('result')">Ranking</div>
+  <div class="tab" onclick="showPanel('guide')">Como usar</div>
 </div>
 
-<!-- ============================= REGISTER ============================= -->
-<div id="page-register" class="page">
-  <div class="auth-bg">
-    <div class="grid-lines"></div>
-    <div class="glow-orb orb2" style="opacity:.08"></div>
+<div class="content">
+
+  <!-- IMPORT -->
+  <div id="panel-import" class="panel active">
+    <div class="import-grid">
+      <div class="card">
+        <div class="card-title">Dados do Profit Chart</div>
+        <textarea id="csvInput" placeholder="TICKER,ULTIMO,SALDO.TEORICO,VOC,VOV,VOLUME,NEGOCIOS,VAR%
+PETR4,38.50,15000,45000,28000,48500000,3840,1.45
+VALE3,72.10,-13000,22000,35000,32000000,2210,-0.80"></textarea>
+        <div id="erroMsg" class="error-msg"></div>
+        <div id="warnMsg" class="warn-msg"></div>
+        <div class="btn-row">
+          <button class="btn primary" onclick="processar()">Calcular fluxo</button>
+          <button class="btn" onclick="carregarExemplo()">Carregar exemplo</button>
+          <button class="btn danger" onclick="document.getElementById('csvInput').value=''">Limpar</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Configurações de Assertividade</div>
+
+        <div class="config-box">
+          <div class="config-title">Filtro de Volume Mínimo</div>
+          <div class="config-row">
+            <div class="config-label">
+              Volume financeiro mínimo
+              <small>Ações abaixo são descartadas — ilíquidas distorcem o ranking</small>
+            </div>
+            <div style="display:flex;align-items:center;gap:6px">
+              <input class="config-input" id="volMin" type="number" value="5" min="0" step="1">
+              <span class="config-unit">M R$</span>
+            </div>
+          </div>
+          <div class="config-row">
+            <div class="config-label">
+              Negócios mínimos
+              <small>Filtra ações com poucos trades no dia</small>
+            </div>
+            <div style="display:flex;align-items:center;gap:6px">
+              <input class="config-input" id="negMin" type="number" value="200" min="0" step="50">
+              <span class="config-unit">trades</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="config-box">
+          <div class="config-title">Razão de Agressão</div>
+          <div class="config-row">
+            <div class="config-label">
+              Limiar forte de dominância compradora
+              <small>Acima disso = sinal de compra forte (+35pts)</small>
+            </div>
+            <div style="display:flex;align-items:center;gap:6px">
+              <input class="config-input" id="limiarForteBuy" type="number" value="60" min="51" max="90">
+              <span class="config-unit">%</span>
+            </div>
+          </div>
+          <div class="config-row">
+            <div class="config-label">
+              Limiar forte de dominância vendedora
+              <small>Abaixo disso = sinal de venda forte</small>
+            </div>
+            <div style="display:flex;align-items:center;gap:6px">
+              <input class="config-input" id="limiarForteSell" type="number" value="40" min="10" max="49">
+              <span class="config-unit">%</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="format-box" style="margin-top:.5rem">
+          <p>Formato das colunas (ordem exata):</p>
+          <code>TICKER, ULTIMO, SALDO.TEORICO, VOC, VOV, VOLUME, NEGOCIOS, VAR%</code>
+        </div>
+
+        <div class="step"><div class="step-num">1</div><p>Grade no Profit com IBOV+SMLL → colunas na ordem do formato acima</p></div>
+        <div class="step"><div class="step-num">2</div><p>Ctrl+A → botão direito → <b>Copiar para Excel</b> → salvar como CSV</p></div>
+        <div class="step"><div class="step-num">3</div><p>Abrir CSV no Bloco de Notas → Ctrl+A → Ctrl+C → colar aqui</p></div>
+        <div class="step"><div class="step-num">4</div><p>Ajuste o volume mínimo conforme o dia (dias fracos: baixe para 2M)</p></div>
+      </div>
+    </div>
   </div>
-  <div class="auth-card" style="max-width:500px">
-    <div class="auth-logo">
-      <img src="logo_ia.png" alt="Trade IA" style="height:80px;width:auto;object-fit:contain;margin:0 auto 1rem;display:block" onerror="this.style.display='none'">
-      <div class="auth-brand">TRADE <span>IA</span></div>
-      <div class="auth-title">CRIAR CONTA — PRIMEIRO ACESSO</div>
-    </div>
-    <div class="auth-form">
-      <div class="form-group">
-        <label class="form-label">Nome completo</label>
-        <input class="form-input" id="reg-nome" type="text" placeholder="Seu nome completo">
-      </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">Email</label>
-          <input class="form-input" id="reg-email" type="email" placeholder="seu@email.com">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Celular</label>
-          <input class="form-input" id="reg-cel" type="tel" placeholder="(11) 99999-9999">
-        </div>
-      </div>
-      <div class="form-group">
-        <label class="form-label">CPF</label>
-        <input class="form-input" id="reg-cpf" type="text" placeholder="000.000.000-00" maxlength="14">
-      </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">Senha</label>
-          <input class="form-input" id="reg-senha" type="password" placeholder="••••••••">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Confirmar senha</label>
-          <input class="form-input" id="reg-senha2" type="password" placeholder="••••••••">
-        </div>
-      </div>
-      <div class="auth-msg" id="reg-msg"></div>
-      <button class="btn-auth" onclick="doRegister()">Criar minha conta</button>
-    </div>
-    <div class="auth-switch">Já tem conta? <a onclick="goTo('login')">Entrar</a></div>
-    <div class="auth-switch" style="margin-top:6px"><a onclick="goTo('landing')" style="color:var(--text3)">← Voltar ao início</a></div>
-  </div>
-</div>
 
-<!-- ============================= APP ============================= -->
-<div id="page-app" class="page">
-  <header class="app-header">
-    <div class="app-logo">
-      <img src="logo_ia.png" alt="Trade IA" style="height:32px;width:auto;object-fit:contain" onerror="this.style.display='none'">
-      <span class="app-brand">TRADE <span>IA</span></span>
-    </div>
-    <nav class="app-nav">
-      <button class="app-tab active" onclick="showSubPanel('scanner',this)">Scanner</button>
-      <button class="app-tab" onclick="showSubPanel('guia',this)">Como Usar</button>
-      <button class="app-tab admin-tab" id="admin-tab-btn" onclick="showSubPanel('admin',this)" style="display:none">Admin ⚙️</button>
-    </nav>
-    <div class="app-user">
-      <span class="user-name" id="app-username"></span>
-      <div class="user-avatar" id="app-avatar">?</div>
-      <button class="btn-logout" onclick="doLogout()">Sair</button>
-    </div>
-  </header>
+  <!-- RESULT -->
+  <div id="panel-result" class="panel">
+    <div id="filterInfo" style="font-family:var(--mono);font-size:11px;color:var(--text3);margin-bottom:12px;padding:8px 12px;background:var(--bg3);border-radius:6px;border:1px solid var(--border);display:none"></div>
+    <div class="metrics" id="metricsRow"></div>
 
-  <div class="app-content">
-
-    <!-- PENDING -->
-    <div id="sub-pending" class="sub-panel active">
-      <div class="pending-notice">
-        <div class="pending-icon">⏳</div>
-        <div class="pending-title">Aguardando aprovação</div>
-        <div class="pending-sub">Seu cadastro foi recebido! O administrador irá aprovar seu acesso em breve. Entre em contato pelo WhatsApp (11) 99577-8307.</div>
-        <button class="btn" onclick="doLogout()" style="margin-top:1rem">Sair</button>
-      </div>
-    </div>
-
-    <!-- SCANNER -->
-    <div id="sub-scanner" class="sub-panel">
-      <div id="filterInfo" class="filter-info"></div>
-      <div class="metrics" id="metricsRow"></div>
-
-      <div class="ranking-grid">
-        <div class="table-card">
-          <div class="table-header">
-            <div class="table-dot" style="background:var(--green)"></div>
-            <span class="table-title" style="color:var(--green)">Top 10 — Compra no Leilão</span>
-            <span class="table-count" id="countCompra">0</span>
-          </div>
-          <div class="tbl-scroll">
-            <table><thead><tr>
-              <th>#</th><th>Ativo</th><th>Preço</th><th>Var%</th><th>Razão Agr.</th><th>Book</th><th>Volume</th><th>Score</th><th>Sinais</th>
-            </tr></thead><tbody id="tblBodyCompra"></tbody></table>
-          </div>
-        </div>
-        <div class="table-card">
-          <div class="table-header">
-            <div class="table-dot" style="background:var(--red)"></div>
-            <span class="table-title" style="color:var(--red)">Top 10 — Venda no Leilão</span>
-            <span class="table-count" id="countVenda">0</span>
-          </div>
-          <div class="tbl-scroll">
-            <table><thead><tr>
-              <th>#</th><th>Ativo</th><th>Preço</th><th>Var%</th><th>Razão Agr.</th><th>Book</th><th>Volume</th><th>Score</th><th>Sinais</th>
-            </tr></thead><tbody id="tblBodyVenda"></tbody></table>
-          </div>
-        </div>
-      </div>
-
-      <div class="all-card">
-        <div class="all-header">
-          <span>Todos os ativos</span>
-          <span id="totalLabel" style="font-family:var(--mono);font-size:12px;color:var(--text3)"></span>
-        </div>
-        <div class="filter-row">
-          <span class="filter-label">Filtrar:</span>
-          <button class="filter-btn factive" onclick="filtrar('todos',this)">Todos</button>
-          <button class="filter-btn f-up" onclick="filtrar('alta',this)">Alta</button>
-          <button class="filter-btn" onclick="filtrar('neutro',this)">Neutro</button>
-          <button class="filter-btn f-down" onclick="filtrar('baixa',this)">Baixa</button>
+    <div class="ranking-grid">
+      <div class="table-card">
+        <div class="table-header">
+          <div class="table-header-dot" style="background:var(--green)"></div>
+          <span class="table-title" style="color:var(--green)">Top 10 — Compra no Leilão</span>
+          <span class="table-count" id="countCompra">0</span>
         </div>
         <div class="tbl-scroll">
           <table><thead><tr>
-            <th>#</th><th>Ativo</th><th>Preço</th><th>Var%</th>
-            <th>Razão Agr.</th><th>Ag.C</th><th>Ag.V</th>
-            <th>VOC</th><th>VOV</th><th>Volume</th><th>Negócios</th>
-            <th>Score</th><th>Viés</th><th>Sinais</th>
-          </tr></thead><tbody id="tblAll"></tbody></table>
+            <th>#</th><th>Ativo</th><th>Preço</th><th>Var%</th><th>Saldo Teórico</th><th>VOC/VOV</th><th>Volume</th><th>Score</th><th>Sinais</th>
+          </tr></thead><tbody id="tblBodyCompra"></tbody></table>
         </div>
       </div>
-
-      <div id="no-data-msg" style="text-align:center;padding:3rem;color:var(--text3);font-size:14px;display:none">
-        <div style="font-size:48px;margin-bottom:1rem">📊</div>
-        <div>Nenhum dado disponível ainda.</div>
-        <div style="font-size:12px;margin-top:6px">O administrador ainda não publicou o ranking de hoje.</div>
-      </div>
-    </div>
-
-    <!-- GUIA -->
-    <div id="sub-guia" class="sub-panel">
-      <div class="guide-grid">
-        <div class="guide-card">
-          <h3><div class="guide-icon">⚡</div>Score de Fluxo (0–100)</h3>
-          <div class="ind-row"><div class="ind-pts">35</div><div class="ind-info"><p>Razão de Agressão</p><span>Ag.C/(Ag.C+Ag.V) &gt; 60% = compradores dominam</span></div></div>
-          <div class="ind-row"><div class="ind-pts">25</div><div class="ind-info"><p>Saldo de Ofertas (VOC vs VOV)</p><span>VOC &gt; VOV = book pressionado para cima</span></div></div>
-          <div class="ind-row"><div class="ind-pts">20</div><div class="ind-info"><p>Variação % do dia</p><span>Fechamento positivo = força direcional</span></div></div>
-          <div class="ind-row"><div class="ind-pts">10</div><div class="ind-info"><p>Volume acima da mediana</p><span>Participação real no mercado</span></div></div>
-          <div class="ind-row"><div class="ind-pts">10</div><div class="ind-info"><p>Negócios acima da mediana</p><span>Movimento distribuído, não manipulado</span></div></div>
+      <div class="table-card">
+        <div class="table-header">
+          <div class="table-header-dot" style="background:var(--red)"></div>
+          <span class="table-title" style="color:var(--red)">Top 10 — Venda no Leilão</span>
+          <span class="table-count" id="countVenda">0</span>
         </div>
-        <div class="guide-card">
-          <h3><div class="guide-icon">🎯</div>Como interpretar</h3>
-          <ul>
-            <li><b style="color:var(--green)">60–100 → Comprar no leilão</b><br>Fluxo comprador dominante. Candidato à alta.</li>
-            <li style="margin-top:10px"><b style="color:var(--yellow)">41–59 → Neutro</b><br>Sinais mistos. Aguarde ou reduza o tamanho.</li>
-            <li style="margin-top:10px"><b style="color:var(--red)">0–40 → Vender no leilão</b><br>Vendedores dominam. Candidato à queda.</li>
-          </ul>
-          <div class="highlight-box" style="margin-top:12px"><p>A barra de cada ativo mostra <span style="color:var(--green)">verde = compra</span> / <span style="color:var(--red)">vermelho = venda</span>. Quanto mais de um lado, mais forte o sinal.</p></div>
-        </div>
-        <div class="guide-card">
-          <h3><div class="guide-icon">⏰</div>Rotina diária</h3>
-          <ul>
-            <li><b>17h15</b> — Verifique o ranking publicado pelo admin</li>
-            <li style="margin-top:6px"><b>17h22</b> — Anote os Top 10 de compra e venda</li>
-            <li style="margin-top:6px"><b>17h25</b> — Confirme o preço teórico no Profit Chart</li>
-            <li style="margin-top:6px"><b>17h30</b> — Execute suas ordens no leilão ✅</li>
-          </ul>
-        </div>
-        <div class="guide-card">
-          <h3><div class="guide-icon">📞</div>Suporte Trade IA</h3>
-          <ul>
-            <li>📸 Instagram: <b>@trade_ia</b></li>
-            <li style="margin-top:6px">📱 WhatsApp: <b>(11) 99577-8307</b></li>
-            <li style="margin-top:6px">⏰ Atendimento: dias úteis 9h–18h</li>
-          </ul>
-          <div class="highlight-box" style="margin-top:12px">
-            <p>Dúvidas sobre o scanner ou execução das ordens? Entre em contato pelo WhatsApp.</p>
-          </div>
+        <div class="tbl-scroll">
+          <table><thead><tr>
+            <th>#</th><th>Ativo</th><th>Preço</th><th>Var%</th><th>Saldo Teórico</th><th>VOC/VOV</th><th>Volume</th><th>Score</th><th>Sinais</th>
+          </tr></thead><tbody id="tblBodyVenda"></tbody></table>
         </div>
       </div>
     </div>
 
-    <!-- ADMIN -->
-    <div id="sub-admin" class="sub-panel">
-      <div class="admin-grid">
-        <div class="admin-card">
-          <div class="admin-card-title"><span>📤</span> Publicar dados do pregão</div>
-          <div class="config-box">
-            <div class="config-row">
-              <div class="config-label">Volume mínimo<small>Filtra ações ilíquidas</small></div>
-              <div style="display:flex;align-items:center;gap:6px">
-                <input class="config-input" id="volMin" type="number" value="5" min="0">
-                <span class="config-unit">M R$</span>
-              </div>
-            </div>
-            <div class="config-row">
-              <div class="config-label">Negócios mínimos<small>Trades mínimos no dia</small></div>
-              <div style="display:flex;align-items:center;gap:6px">
-                <input class="config-input" id="negMin" type="number" value="200" min="0">
-                <span class="config-unit">trades</span>
-              </div>
-            </div>
-            <div class="config-row">
-              <div class="config-label">Razão forte compra<small>Acima = sinal máximo</small></div>
-              <div style="display:flex;align-items:center;gap:6px">
-                <input class="config-input" id="limiarBuy" type="number" value="60" min="51" max="90">
-                <span class="config-unit">%</span>
-              </div>
-            </div>
-          </div>
-          <textarea class="admin-input" id="adminCsvInput" placeholder="Cole aqui os dados exportados do Profit Chart:
-
-TICKER,FECHAMENTO,AG.COMPRA,AG.VENDA,VOC,VOV,VOLUME,NEGOCIOS,VAR%
-PETR4,38.50,12500000,8200000,45000000,28000000,48500000,3840,1.45
-VALE3,72.10,8100000,9800000,22000000,35000000,32000000,2210,-0.80"></textarea>
-          <div class="error-msg" id="admin-err"></div>
-          <div class="warn-msg" id="admin-warn"></div>
-          <div class="info-msg" id="admin-info"></div>
-          <div class="btn-row">
-            <button class="btn primary" onclick="adminPublicar()">Calcular e publicar ranking</button>
-            <button class="btn" onclick="adminLimpar()">Limpar dados</button>
-          </div>
-        </div>
-
-        <div class="admin-card">
-          <div class="admin-card-title"><span>👥</span> Gerenciar usuários</div>
-          <div class="user-table-wrap" id="userList">
-            <div style="text-align:center;padding:2rem;color:var(--text3);font-size:13px">Carregando usuários...</div>
-          </div>
-        </div>
+    <div class="all-card">
+      <div class="all-header">
+        <span>Todos os ativos aprovados no filtro</span>
+        <span id="totalLabel" style="font-family:var(--mono);font-size:12px;color:var(--text3)"></span>
       </div>
-
-      <div class="admin-card" style="margin-bottom:1.5rem">
-        <div class="admin-card-title"><span>📊</span> Status da plataforma</div>
-        <div class="metrics" id="adminMetrics">
-          <div class="metric"><div class="metric-label">Usuários cadastrados</div><div class="metric-value blue" id="stat-total-users">0</div></div>
-          <div class="metric"><div class="metric-label">Aprovados</div><div class="metric-value up" id="stat-active-users">0</div></div>
-          <div class="metric"><div class="metric-label">Pendentes</div><div class="metric-value yellow" id="stat-pending-users">0</div></div>
-          <div class="metric"><div class="metric-label">Último ranking</div><div class="metric-value blue" id="stat-last-update" style="font-size:13px">—</div></div>
-        </div>
+      <div class="filter-row">
+        <span class="filter-label">Filtrar:</span>
+        <button class="filter-btn active" onclick="filtrar('todos',this)">Todos</button>
+        <button class="filter-btn f-up" onclick="filtrar('alta',this)">Alta</button>
+        <button class="filter-btn" onclick="filtrar('neutro',this)">Neutro</button>
+        <button class="filter-btn f-down" onclick="filtrar('baixa',this)">Baixa</button>
+      </div>
+      <div class="tbl-scroll">
+        <table><thead><tr>
+          <th>#</th><th>Ativo</th><th>Preço</th><th>Var%</th>
+          <th>Razão Agr.</th><th>Ag.C</th><th>Ag.V</th>
+          <th>VOC</th><th>VOV</th><th>Volume</th><th>Negócios</th>
+          <th>Score</th><th>Viés</th><th>Sinais</th>
+        </tr></thead><tbody id="tblAll"></tbody></table>
       </div>
     </div>
 
+    <div class="btn-row">
+      <button class="btn primary" onclick="exportarCSV()">Exportar CSV do dia</button>
+      <button class="btn" onclick="showPanel('import')">Nova análise</button>
+    </div>
   </div>
+
+  <!-- GUIDE -->
+  <div id="panel-guide" class="panel">
+    <div class="guide-grid">
+
+      <div class="guide-card">
+        <h3><div class="guide-icon">⚡</div>Score v3 — Razão de Agressão</h3>
+        <div class="ind-row">
+          <div class="ind-pts">35</div>
+          <div class="ind-info">
+            <p>Razão de Agressão &gt; limiar forte</p>
+            <span>Ag.C/(Ag.C+Ag.V) &gt; 60% = compra forte / &lt;40% = venda forte</span>
+          </div>
+        </div>
+        <div class="ind-row">
+          <div class="ind-pts">+10</div>
+          <div class="ind-info">
+            <p>Razão entre 50–60% (dominância moderada)</p>
+            <span>Bônus de intensidade quando a razão está no intervalo moderado</span>
+          </div>
+        </div>
+        <div class="ind-row">
+          <div class="ind-pts">25</div>
+          <div class="ind-info">
+            <p>Saldo de Ofertas (VOC &gt; VOV)</p>
+            <span>Book pressionado para cima = demanda latente no leilão</span>
+          </div>
+        </div>
+        <div class="ind-row">
+          <div class="ind-pts">20</div>
+          <div class="ind-info">
+            <p>Variação % do dia positiva</p>
+            <span>Força direcional confirmada no pregão</span>
+          </div>
+        </div>
+        <div class="ind-row">
+          <div class="ind-pts">10</div>
+          <div class="ind-info">
+            <p>Volume &gt; mediana + mínimo</p>
+            <span>Participação real e liquidez garantida</span>
+          </div>
+        </div>
+        <div class="ind-row">
+          <div class="ind-pts">10</div>
+          <div class="ind-info">
+            <p>Negócios &gt; mediana</p>
+            <span>Movimento distribuído, não concentrado</span>
+          </div>
+        </div>
+        <div class="highlight-box">
+          <p><b style="color:var(--orange)">Diferença da v2:</b> antes o score usava saldo bruto (Ag.C − Ag.V). Agora usa a <b>razão %</b> — isso nivela ações com volumes muito diferentes e elimina distorção.</p>
+        </div>
+      </div>
+
+      <div class="guide-card">
+        <h3><div class="guide-icon">🔍</div>Filtro de Volume — por quê importa</h3>
+        <p>Sem filtro, ações com R$ 500K de volume aparecem no ranking ao lado de ações com R$ 50M. O problema:</p>
+        <ul style="margin-top:8px">
+          <li>Ação ilíquida tem Ag.Compra alto em % mas volume mínimo — qualquer ordem sua move o preço</li>
+          <li>No leilão de fechamento a execução pode ser parcial ou com spread enorme</li>
+          <li>O sinal parece forte mas é falso — poucos players manipulam facilmente</li>
+        </ul>
+        <div class="highlight-box" style="margin-top:12px">
+          <p><b style="color:var(--orange)">Regra sugerida:</b><br>
+          Pregão normal → mínimo R$ 5M<br>
+          Dia de mercado fraco → mínimo R$ 2M<br>
+          Se sobrar menos de 20 ações → baixe o filtro</p>
+        </div>
+      </div>
+
+      <div class="guide-card">
+        <h3><div class="guide-icon">📊</div>Como ler a Razão de Agressão</h3>
+        <ul>
+          <li><b style="color:var(--green)">&gt; 60%</b> — Dominância compradora forte. Score máximo neste critério.</li>
+          <li style="margin-top:6px"><b style="color:var(--green)">50–60%</b> — Dominância compradora moderada. Score parcial.</li>
+          <li style="margin-top:6px"><b style="color:var(--text2)">40–50%</b> — Equilíbrio. Nenhum dos lados domina.</li>
+          <li style="margin-top:6px"><b style="color:var(--red)">40–50%</b> — Dominância vendedora moderada. Score parcial inverso.</li>
+          <li style="margin-top:6px"><b style="color:var(--red)">&lt; 40%</b> — Dominância vendedora forte. Score máximo de venda.</li>
+        </ul>
+        <div class="highlight-box" style="margin-top:12px">
+          <p>A barra colorida em cada ativo mostra visualmente a razão: <span style="color:var(--green)">verde = compra</span> / <span style="color:var(--red)">vermelho = venda</span>. Quanto mais de um lado, mais forte o sinal.</p>
+        </div>
+      </div>
+
+      <div class="guide-card">
+        <h3><div class="guide-icon">⏰</div>Rotina diária recomendada</h3>
+        <ul>
+          <li><b>17h10</b> — Abre o layout <i>"Scanner Fluxo"</i> salvo no Profit</li>
+          <li style="margin-top:6px"><b>17h15</b> — Ctrl+A → Copiar → Colar no Excel → Salvar CSV</li>
+          <li style="margin-top:6px"><b>17h18</b> — Cola no Scanner → ajusta o volume mínimo → Calcular</li>
+          <li style="margin-top:6px"><b>17h22</b> — Anota os Top 10 de cada lado</li>
+          <li style="margin-top:6px"><b>17h25</b> — Confirma o preço teórico no Profit e monta as ordens</li>
+          <li style="margin-top:6px"><b>17h30</b> — Leilão executa</li>
+        </ul>
+        <div class="highlight-box" style="margin-top:12px">
+          <p><b style="color:var(--orange)">Dica extra:</b> salve o CSV exportado de cada dia. Depois de 1–2 semanas, veja quais ações aparecem repetidamente no Top 10 — esses são os candidatos mais confiáveis.</p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<div class="footer">
+  Scanner B3 <span>v3 — Razão de Agressão + Filtro de Volume</span> &nbsp;|&nbsp; Suporte à decisão. Não é recomendação de investimento.
 </div>
 
 <script>
-// ===================== NAVEGAÇÃO =====================
-let currentPage = 'landing';
-window.goTo = function goTo(page) {
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.getElementById('page-' + page).classList.add('active');
-  currentPage = page;
-  window.scrollTo(0,0);
-}
-window.showMsg = function showMsg(id, msg, type) {
-  const el = document.getElementById(id);
-  el.textContent = msg;
-  el.className = 'auth-msg ' + type;
-  el.style.display = 'block';
-}
-let currentUser = null;
-let filtroAtual = 'todos';
+let dadosGlobais = [];
 let dadosFiltrados = [];
+let filtroAtual = 'todos';
 
-window.enterApp = function enterApp(user) {
-  currentUser = user;
-  document.getElementById('app-username').textContent = user.nome.split(' ')[0];
-  document.getElementById('app-avatar').textContent = user.nome.charAt(0).toUpperCase();
-  const adminBtn = document.getElementById('admin-tab-btn');
-  if (user.role === 'admin') adminBtn.style.display = '';
-  else adminBtn.style.display = 'none';
-  goTo('app');
-  if (user.status === 'pending') { showSubPanelRaw('pending'); }
-  else {
-    showSubPanelRaw('scanner');
-    loadRanking();
-    if (user.role === 'admin') { renderUserList(); updateAdminStats(); }
-  }
+function atualizarHora() {
+  const a = new Date();
+  document.getElementById('horaAtual').textContent =
+    a.toLocaleDateString('pt-BR') + '  ' +
+    a.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
 }
-window.showSubPanel = function showSubPanel(panel, btn) {
-  if (currentUser && currentUser.status === 'pending' && panel !== 'pending') return;
-  showSubPanelRaw(panel);
-  document.querySelectorAll('.app-tab').forEach(t => t.classList.remove('active'));
-  if (btn) btn.classList.add('active');
-}
-window.showSubPanelRaw = function showSubPanelRaw(panel) {
-  document.querySelectorAll('.sub-panel').forEach(p => p.classList.remove('active'));
-  const el = document.getElementById('sub-' + panel);
-  if (el) el.classList.add('active');
+atualizarHora();
+setInterval(atualizarHora, 1000);
+
+function showPanel(p) {
+  document.querySelectorAll('.panel').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
+  document.getElementById('panel-' + p).classList.add('active');
+  const map = {import:0, result:1, guide:2};
+  document.querySelectorAll('.tab')[map[p]].classList.add('active');
 }
 
-// ===================== SCANNER ENGINE =====================
-function parseNum(s) {
-  if (s === null || s === undefined) return NaN;
-  let str = String(s).trim().replace(/%/g,'').replace(/R\$/g,'').trim();
-  if (!str || str === '-') return NaN;
-  const lastDot = str.lastIndexOf('.');
-  const lastComma = str.lastIndexOf(',');
-  if (lastComma > lastDot) { str = str.replace(/\./g,'').replace(',','.'); }
-  else if (lastDot > lastComma) { str = str.replace(/,/g,''); }
-  else { str = str.replace(/[.,]/g,''); }
-  return parseFloat(str);
-}
-function parsear(txt) {
-  const linhasRaw = txt.trim().split('\n').map(l => l.replace(/\r/g,'')).filter(l => l.trim());
-  const primeira = linhasRaw[0] || '';
-  const nTab = (primeira.match(/\t/g)||[]).length;
-  const nPV  = (primeira.match(/;/g)||[]).length;
-  const usaTab = nTab >= 7;
-  const usaPV  = nPV >= 7;
-  const linhas = linhasRaw;
-  const res = [];
-  for (const linha of linhas) {
-    const p = usaTab ? linha.split('\t') : usaPV ? linha.split(';') : linha.split(',');
-    const pp = p.map(x => x.trim().replace(/^"|"$/g,'').trim());
-    if (pp.length < 8) continue;
-    if (isNaN(parseNum(pp[1]))) continue;
-    const r = {
-      ticker: pp[0].toUpperCase().replace(/[^A-Z0-9]/g,''),
-      fechamento:parseNum(pp[1]), agCompra:parseNum(pp[2]), agVenda:parseNum(pp[3]),
-      voc:parseNum(pp[4]), vov:parseNum(pp[5]), volume:parseNum(pp[6]),
-      negocios:parseNum(pp[7]), varPct:pp.length>=9?parseNum(pp[8]):null
-    };
-    if (!r.ticker) continue;
-    if ([r.fechamento,r.agCompra,r.agVenda,r.voc,r.vov,r.volume,r.negocios].some(v=>isNaN(v))) continue;
-    res.push(r);
-  }
-  return res;
-}
-function mediana(arr) {
-  if (!arr.length) return 0;
-  const s=[...arr].sort((a,b)=>a-b), m=Math.floor(s.length/2);
-  return s.length%2?s[m]:(s[m-1]+s[m])/2;
-}
-function calcScore(r, cfg, medVol, medNeg) {
-  let s=0, d=[];
-  const total=r.agCompra+r.agVenda, razao=total>0?(r.agCompra/total)*100:50, saldoBook=r.voc-r.vov;
-  if (razao>=cfg.limiarBuy){s+=35;d.push({lbl:'AGR++',type:'buy'});}
-  else if (razao>=50){s+=20;d.push({lbl:'AGR+',type:'buy'});}
-  else if (razao<=(100-cfg.limiarBuy)){d.push({lbl:'AGR--',type:'sell'});}
-  else{d.push({lbl:'AGR-',type:'sell'});}
-  if (razao>=50&&razao<cfg.limiarBuy){s+=10;d.push({lbl:'MOD+',type:'buy'});}
-  if (saldoBook>0){s+=25;d.push({lbl:'VOC+',type:'buy'});}else{d.push({lbl:'VOV+',type:'sell'});}
-  if (r.varPct!==null&&r.varPct>0){s+=20;d.push({lbl:'VAR+',type:'buy'});}
-  else if (r.varPct!==null&&r.varPct<0){d.push({lbl:'VAR-',type:'sell'});}
-  if (r.volume>=medVol){s+=10;d.push({lbl:'VOL+',type:'buy'});}
-  if (r.negocios>=medNeg){s+=10;d.push({lbl:'NEG+',type:'buy'});}
-  return{score:Math.min(s,100),detalhes:d,razao:Math.round(razao),saldoBook};
-}
-function vies(s){if(s>=60)return{label:'Alta',cls:'badge-up'};if(s<=40)return{label:'Baixa',cls:'badge-down'};return{label:'Neutro',cls:'badge-neut'};}
-function scoreCor(s){if(s>=60)return'var(--green)';if(s<=40)return'var(--red)';return'var(--text3)';}
-function razaoCor(r){if(r>=60)return'var(--green)';if(r<=40)return'var(--red)';return'var(--yellow)';}
-function fmtNum(n){const a=Math.abs(n),sg=n<0?'-':'';if(a>=1e9)return sg+(a/1e9).toFixed(1)+'B';if(a>=1e6)return sg+(a/1e6).toFixed(1)+'M';if(a>=1e3)return sg+(a/1e3).toFixed(0)+'K';return sg+a.toFixed(0);}
-function varBadge(v){
-  if(v===null||isNaN(v))return'<span style="color:var(--text3);font-family:var(--mono);font-size:12px">—</span>';
-  const cor=v>0?'var(--green)':v<0?'var(--red)':'var(--text3)';
-  return`<span style="font-family:var(--mono);font-size:12px;font-weight:600;color:${cor}">${v>0?'+':''}${v.toFixed(2)}%</span>`;
-}
-function razaoCell(r){
-  const cor=razaoCor(r.razao),fc=r.razao>=50?'var(--green)':'var(--red)';
-  return`<div class="razao-bar"><div class="razao-wrap"><div class="razao-fill" style="width:${r.razao}%;background:${fc}"></div></div><span style="font-family:var(--mono);font-size:11px;font-weight:600;color:${cor};min-width:32px">${r.razao}%</span></div>`;
-}
-function bookCell(r){const s=r.voc-r.vov,cor=s>0?'var(--green)':'var(--red)';return`<span style="font-family:var(--mono);font-size:11px;font-weight:600;color:${cor}">${fmtNum(s)}</span>`;}
-function rowHtml(r,i){
-  const v=vies(r.score),cor=scoreCor(r.score),sinais=r.detalhes.map(s=>`<span class="sinal-tag ${s.type}">${s.lbl}</span>`).join('');
-  return`<tr><td class="rank-num">${i+1}</td><td><span class="ticker">${r.ticker}</span></td><td style="font-family:var(--mono);font-size:12px">R$${r.fechamento.toFixed(2)}</td><td>${varBadge(r.varPct)}</td><td>${razaoCell(r)}</td><td>${bookCell(r)}</td><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">${fmtNum(r.volume)}</td><td><div class="score-bar"><div class="bar-bg"><div class="bar-fill" style="width:${r.score}%;background:${cor}"></div></div><span class="score-num" style="color:${cor}">${r.score}</span></div></td><td><div class="sinais">${sinais}</div></td></tr>`;
-}
-function rowAllHtml(r,i){
-  const v=vies(r.score),cor=scoreCor(r.score),sinais=r.detalhes.map(s=>`<span class="sinal-tag ${s.type}">${s.lbl}</span>`).join('');
-  return`<tr><td class="rank-num">${i+1}</td><td><span class="ticker">${r.ticker}</span></td><td style="font-family:var(--mono);font-size:12px">R$${r.fechamento.toFixed(2)}</td><td>${varBadge(r.varPct)}</td><td>${razaoCell(r)}</td><td style="font-family:var(--mono);font-size:11px;color:var(--green)">${fmtNum(r.agCompra)}</td><td style="font-family:var(--mono);font-size:11px;color:var(--red)">${fmtNum(r.agVenda)}</td><td style="font-family:var(--mono);font-size:11px;color:var(--green)">${fmtNum(r.voc)}</td><td style="font-family:var(--mono);font-size:11px;color:var(--red)">${fmtNum(r.vov)}</td><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">${fmtNum(r.volume)}</td><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">${r.negocios.toFixed(0)}</td><td><div class="score-bar"><div class="bar-bg"><div class="bar-fill" style="width:${r.score}%;background:${cor}"></div></div><span class="score-num" style="color:${cor}">${r.score}</span></div></td><td><span class="badge ${v.cls}">${v.label}</span></td><td><div class="sinais">${sinais}</div></td></tr>`;
-}
-window.filtrar = function filtrar(tipo,btn){
-  filtroAtual=tipo;
-  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('factive'));
-  if(btn)btn.classList.add('factive');
+function filtrar(tipo, btn) {
+  filtroAtual = tipo;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
   renderTblAll(dadosFiltrados);
 }
-function renderTblAll(dados){
-  let lista=dados;
-  if(filtroAtual==='alta')lista=dados.filter(r=>r.score>=60);
-  else if(filtroAtual==='baixa')lista=dados.filter(r=>r.score<=40);
-  else if(filtroAtual==='neutro')lista=dados.filter(r=>r.score>40&&r.score<60);
-  document.getElementById('tblAll').innerHTML=lista.map((r,i)=>rowAllHtml(r,i)).join('');
-  document.getElementById('totalLabel').textContent=lista.length+' de '+dados.length+' ativos';
-}
-function renderRanking(rankData){
-  const dados=rankData.dados;
-  dadosFiltrados=dados;
-  document.getElementById('no-data-msg').style.display='none';
-  const compra=dados.filter(r=>r.score>=60).slice(0,10);
-  const venda=[...dados].filter(r=>r.score<=40).sort((a,b)=>a.score-b.score).slice(0,10);
-  const altaC=dados.filter(r=>r.score>=60).length, baixaC=dados.filter(r=>r.score<=40).length;
-  const neutroC=dados.filter(r=>r.score>40&&r.score<60).length;
-  const avg=Math.round(dados.reduce((a,r)=>a+r.score,0)/dados.length);
-  const total=rankData.totalBruto||dados.length, remov=total-dados.length;
-  const domC=dados.filter(r=>r.razao>=50).length, pctF=Math.round(domC/dados.length*100);
-  const fi=document.getElementById('filterInfo');
-  fi.style.display='block';
-  fi.innerHTML=`Publicado: <b>${rankData.dataPublicacao||'—'}</b> &nbsp;|&nbsp; <span style="color:var(--green)">${dados.length} aprovadas</span> · <span style="color:var(--red)">${remov} removidas</span>`;
-  document.getElementById('metricsRow').innerHTML=`
-    <div class="metric"><div class="metric-label">Aprovadas</div><div class="metric-value">${dados.length}<span style="font-size:11px;color:var(--text3)">/${total}</span></div></div>
-    <div class="metric"><div class="metric-label">Fluxo compra</div><div class="metric-value up">${altaC}</div></div>
-    <div class="metric"><div class="metric-label">Neutros</div><div class="metric-value yellow">${neutroC}</div></div>
-    <div class="metric"><div class="metric-label">Fluxo venda</div><div class="metric-value down">${baixaC}</div></div>
-    <div class="metric"><div class="metric-label">Score médio</div><div class="metric-value blue">${avg}</div></div>
-    <div class="metric"><div class="metric-label">Dom. compra</div><div class="metric-value ${pctF>=50?'up':'down'}">${pctF}%</div></div>
-  `;
-  document.getElementById('tblBodyCompra').innerHTML=compra.map((r,i)=>rowHtml(r,i)).join('');
-  document.getElementById('countCompra').textContent=compra.length;
-  document.getElementById('tblBodyVenda').innerHTML=venda.map((r,i)=>rowHtml(r,i)).join('');
-  document.getElementById('countVenda').textContent=venda.length;
-  renderTblAll(dados);
-}
-function hideAdminMsgs(){['admin-err','admin-warn','admin-info'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});}
-function showAdminMsg(type,msg){const map={err:'admin-err',warn:'admin-warn',info:'admin-info'};const el=document.getElementById(map[type]);if(!el)return;el.textContent=msg;el.style.display='block';}
-document.addEventListener('DOMContentLoaded',function(){
-  const cpfInput=document.getElementById('reg-cpf');
-  if(cpfInput)cpfInput.addEventListener('input',function(e){
-    let v=e.target.value.replace(/\D/g,'');
-    if(v.length<=11)v=v.replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d{1,2})$/,'$1-$2');
-    e.target.value=v;
-  });
-});
-</script>
 
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-import { getFirestore, doc, setDoc, getDoc, getDocs, collection, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-
-const firebaseConfig = {
-  apiKey: "AIzaSyAdELvc-UM7zuh6YY8uxxqnTr2xyTjiTzs",
-  authDomain: "scanner-b3-c4b14.firebaseapp.com",
-  projectId: "scanner-b3-c4b14",
-  storageBucket: "scanner-b3-c4b14.firebasestorage.app",
-  messagingSenderId: "998119412625",
-  appId: "1:998119412625:web:9f7b8bce127af42d718030"
-};
-
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
-const ADMIN_EMAIL = 'admin@tradeia.com';
-
-window.doLogin = async function() {
-  const email = document.getElementById('login-email').value.trim().toLowerCase();
-  const senha = document.getElementById('login-senha').value;
-  if (!email||!senha){showMsg('login-msg','Preencha todos os campos.','error');return;}
-  try { await signInWithEmailAndPassword(auth, email, senha); }
-  catch(e){ showMsg('login-msg','Email ou senha incorretos.','error'); }
+function mediana(arr) {
+  if (!arr.length) return 0;
+  const s = [...arr].sort((a,b) => a-b);
+  const m = Math.floor(s.length/2);
+  return s.length % 2 ? s[m] : (s[m-1]+s[m])/2;
 }
 
-window.doRegister = async function() {
-  const nome=document.getElementById('reg-nome').value.trim();
-  const email=document.getElementById('reg-email').value.trim().toLowerCase();
-  const cel=document.getElementById('reg-cel').value.trim();
-  const cpf=document.getElementById('reg-cpf').value.trim();
-  const senha=document.getElementById('reg-senha').value;
-  const senha2=document.getElementById('reg-senha2').value;
-  if (!nome||!email||!cel||!cpf||!senha){showMsg('reg-msg','Preencha todos os campos.','error');return;}
-  if (senha!==senha2){showMsg('reg-msg','As senhas não coincidem.','error');return;}
-  if (senha.length<6){showMsg('reg-msg','Senha deve ter ao menos 6 caracteres.','error');return;}
-  try {
-    const cred = await createUserWithEmailAndPassword(auth, email, senha);
-    const isAdmin = email===ADMIN_EMAIL;
-    await setDoc(doc(db,'users',cred.user.uid),{
-      uid:cred.user.uid, nome, email, cel, cpf,
-      status: isAdmin?'active':'pending',
-      role: isAdmin?'admin':'user',
-      created: new Date().toISOString()
-    });
-    showMsg('reg-msg','Cadastro realizado! Aguarde a aprovação.','success');
-  } catch(e){
-    if(e.code==='auth/email-already-in-use')showMsg('reg-msg','Email já cadastrado.','error');
-    else showMsg('reg-msg','Erro: '+e.message,'error');
+function getConfig() {
+  return {
+    volMin:        (parseFloat(document.getElementById('volMin').value) || 0) * 1e6,
+    negMin:        parseFloat(document.getElementById('negMin').value) || 0,
+    limiarForteBuy: parseFloat(document.getElementById('limiarForteBuy').value) || 60,
+    limiarForteSell:parseFloat(document.getElementById('limiarForteSell').value) || 40,
+  };
+}
+
+function calcScore(r, cfg, medVol, medNeg) {
+  let s = 0, d = [];
+  const saldoBook = r.voc - r.vov;
+  const bookValido = (r.voc + r.vov) > 0;
+
+  // ---- 1. SALDO TEÓRICO (35pts) — principal indicador do leilão ----
+  // Saldo Teórico = VOC - VOV dentro do leilão: positivo=compra, negativo=venda
+  const medSaldo = cfg.medSaldo || 0;
+  if (r.saldoTeorico > 1000)       { s += 35; d.push({lbl:'ST++', type:'buy'}); }
+  else if (r.saldoTeorico > 0)     { s += 20; d.push({lbl:'ST+',  type:'buy'}); }
+  else if (r.saldoTeorico < -1000) { d.push({lbl:'ST--', type:'sell'}); }
+  else if (r.saldoTeorico < 0)     { d.push({lbl:'ST-',  type:'sell'}); }
+
+  // ---- 2. VOC vs VOV (25pts) — pressão no book ----
+  if (bookValido) {
+    if (saldoBook > 0) { s += 25; d.push({lbl:'VOC+', type:'buy'}); }
+    else               { d.push({lbl:'VOV+', type:'sell'}); }
   }
+
+  // ---- 3. VARIAÇÃO % do dia (20pts) ----
+  if (r.varPct !== null && r.varPct > 0.3)       { s += 20; d.push({lbl:'VAR+', type:'buy'}); }
+  else if (r.varPct !== null && r.varPct < -0.3) { d.push({lbl:'VAR-', type:'sell'}); }
+
+  // ---- 4. VOLUME acima da mediana (10pts) ----
+  if (r.volume >= medVol) { s += 10; d.push({lbl:'VOL+', type:'buy'}); }
+
+  // ---- 5. NEGÓCIOS acima da mediana (10pts) ----
+  if (r.negocios >= medNeg) { s += 10; d.push({lbl:'NEG+', type:'buy'}); }
+
+  // ---- SCORE DE VENDA (simétrico e independente) ----
+  let vendaScore = 0;
+  if (r.saldoTeorico < -1000)      { vendaScore += 35; }
+  else if (r.saldoTeorico < 0)     { vendaScore += 20; }
+  if (bookValido && saldoBook < 0)  { vendaScore += 25; }
+  if (r.varPct !== null && r.varPct < -0.3) { vendaScore += 20; }
+  if (r.volume >= medVol)           { vendaScore += 10; }
+  if (r.negocios >= medNeg)         { vendaScore += 10; }
+
+  // Score final — viés de venda real inverte o score
+  let score;
+  const sinaisVenda  = d.filter(x => x.type === 'sell').length;
+  const sinaisCompra = d.filter(x => x.type === 'buy').length;
+  if (vendaScore > s && sinaisVenda >= 1) {
+    score = Math.max(0, 50 - vendaScore);
+  } else {
+    score = Math.min(100, s);
+  }
+
+  r._sinaisVenda  = sinaisVenda;
+  r._sinaisCompra = sinaisCompra;
+  r._dadosValidos = bookValido;
+  r._saldoTeorico = r.saldoTeorico;
+
+  // Razão simulada para exibição (VOC vs VOV)
+  const totalBook = r.voc + r.vov;
+  const razao = totalBook > 0 ? Math.round((r.voc / totalBook) * 100) : 50;
+
+  return { score: Math.round(score), detalhes: d, razao, saldoBook };
 }
 
-window.doLogout = async function() { await signOut(auth); goTo('landing'); }
-
-onAuthStateChanged(auth, async (user) => {
-  if (!user) return;
-  try {
-    const snap = await getDoc(doc(db,'users',user.uid));
-    if (!snap.exists()){await signOut(auth);return;}
-    enterApp(snap.data());
-  } catch(e){ console.error(e); }
-});
-
-window.loadRanking = async function() {
-  try {
-    const snap = await getDoc(doc(db,'ranking','atual'));
-    if (!snap.exists()){
-      document.getElementById('no-data-msg').style.display='block';
-      return;
-    }
-    renderRanking(snap.data());
-  } catch(e){ document.getElementById('no-data-msg').style.display='block'; }
+function vies(score) {
+  if (score >= 60) return { label:'Alta', cls:'badge-up' };
+  if (score <= 40) return { label:'Baixa', cls:'badge-down' };
+  return { label:'Neutro', cls:'badge-neut' };
 }
 
-window.adminPublicar = async function() {
-  const txt = document.getElementById('adminCsvInput').value;
-  const cfg = {
-    volMin:(parseFloat(document.getElementById('volMin').value)||5)*1e6,
-    negMin:parseFloat(document.getElementById('negMin').value)||200,
-    limiarBuy:parseFloat(document.getElementById('limiarBuy').value)||60,
-  };
-  hideAdminMsgs();
-  const todos = parsear(txt);
-  if (!todos.length){showAdminMsg('err','Nenhuma linha válida.');return;}
-  const dados = todos.filter(r=>r.volume>=cfg.volMin&&r.negocios>=cfg.negMin);
-  if (!dados.length){showAdminMsg('err','Nenhuma ação passou no filtro. Reduza o volume mínimo.');return;}
-  if (dados.length<10) showAdminMsg('warn','Apenas '+dados.length+' ações aprovadas.');
-  const medVol=mediana(dados.map(r=>r.volume)), medNeg=mediana(dados.map(r=>r.negocios));
-  dados.forEach(r=>{
-    const res=calcScore(r,cfg,medVol,medNeg);
-    r.score=res.score;r.detalhes=res.detalhes;r.razao=res.razao;r.saldoBook=res.saldoBook;
+function scoreCor(s) {
+  if (s >= 60) return 'var(--green)';
+  if (s <= 40) return 'var(--red)';
+  return 'var(--text3)';
+}
+
+function razaoCor(r) {
+  if (r >= 60) return 'var(--green)';
+  if (r <= 40) return 'var(--red)';
+  return 'var(--yellow)';
+}
+
+function fmtNum(n) {
+  const abs = Math.abs(n);
+  const sinal = n < 0 ? '-' : '';
+  if (abs >= 1e9) return sinal+(abs/1e9).toFixed(1)+'B';
+  if (abs >= 1e6) return sinal+(abs/1e6).toFixed(1)+'M';
+  if (abs >= 1e3) return sinal+(abs/1e3).toFixed(0)+'K';
+  return sinal+abs.toFixed(0);
+}
+
+function varBadge(v) {
+  if (v === null || isNaN(v)) return '<span style="color:var(--text3);font-family:var(--mono);font-size:12px">—</span>';
+  const cor = v > 0 ? 'var(--green)' : v < 0 ? 'var(--red)' : 'var(--text3)';
+  const sinal = v > 0 ? '+' : '';
+  return `<span style="font-family:var(--mono);font-size:12px;font-weight:600;color:${cor}">${sinal}${v.toFixed(2)}%</span>`;
+}
+
+function razaoCell(r) {
+  const cor = razaoCor(r.razao);
+  const fillW = r.razao;
+  const fillCor = r.razao >= 50 ? 'var(--green)' : 'var(--red)';
+  return `<div class="razao-bar">
+    <div class="razao-wrap">
+      <div class="razao-fill" style="width:${fillW}%;background:${fillCor}"></div>
+    </div>
+    <span style="font-family:var(--mono);font-size:11px;font-weight:600;color:${cor};min-width:32px">${r.razao}%</span>
+  </div>`;
+}
+
+function bookCell(r) {
+  const saldo = r.voc - r.vov;
+  const cor = saldo > 0 ? 'var(--green)' : 'var(--red)';
+  return `<span style="font-family:var(--mono);font-size:11px;font-weight:600;color:${cor}">${fmtNum(saldo)}</span>`;
+}
+
+// Converte numero em qualquer formato BR ou EN
+// Ex: "48.500.000" -> 48500000 | "1.234,56" -> 1234.56 | "1,234.56" -> 1234.56
+function parseNum(s) {
+  if (s === null || s === undefined) return NaN;
+  let str = String(s).trim().replace(/%/g,'').replace(/\s/g,'').replace(/R\$/g,'');
+  if (!str || str === '-') return NaN;
+  const lastDot   = str.lastIndexOf('.');
+  const lastComma = str.lastIndexOf(',');
+  if (lastComma > lastDot) {
+    // BR: 1.234,56 — remove pontos, troca virgula por ponto
+    str = str.replace(/\./g,'').replace(',','.');
+  } else if (lastDot > lastComma) {
+    // EN: 1,234.56 — remove virgulas
+    str = str.replace(/,/g,'');
+  } else {
+    // inteiro puro ou sem separador decimal
+    str = str.replace(/[.,]/g,'');
+  }
+  return parseFloat(str);
+}
+
+function parsear(txt) {
+  // Detecta separador: TAB, ponto-e-virgula ou virgula
+  const primeira = txt.trim().split(/\r?\n/)[0] || '';
+  const nTab = (primeira.match(/\t/g)||[]).length;
+  const nPV  = (primeira.match(/;/g)||[]).length;
+  let sep = nTab >= 7 ? '\t' : nPV >= 7 ? ';' : ',';
+  const re = sep === '\t' ? /\t/ : new RegExp(sep);
+
+  const linhas = txt.trim().split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+  const res = [];
+  for (const linha of linhas) {
+    // Remove aspas que o Excel coloca ao redor de celulas com separadores internos
+    const p = linha.split(re).map(x => x.trim().replace(/^"|"$/g,'').trim());
+    if (p.length < 8) continue;
+    if (isNaN(parseNum(p[1]))) continue; // pula cabecalho
+    const r = {
+      ticker:    p[0].toUpperCase().replace(/[^A-Z0-9]/g,''),
+      fechamento:parseNum(p[1]),
+      agCompra:  parseNum(p[2]),
+      agVenda:   parseNum(p[3]),
+      voc:       parseNum(p[4]),
+      vov:       parseNum(p[5]),
+      volume:    parseNum(p[6]),
+      negocios:  parseNum(p[7]),
+      varPct:    p.length >= 9 ? parseNum(p[8]) : null
+    };
+    if (!r.ticker) continue;
+    if ([r.fechamento,r.agCompra,r.agVenda,r.voc,r.vov,r.volume,r.negocios].some(v => isNaN(v))) continue;
+    res.push(r);
+  }
+  return { dados: res };
+}
+
+function rowHtml(r, i) {
+  const v = vies(r.score);
+  const cor = scoreCor(r.score);
+  const sinais = r.detalhes.map(s => `<span class="sinal-tag ${s.type}">${s.lbl}</span>`).join('');
+  return `<tr>
+    <td class="rank-num">${i+1}</td>
+    <td><span class="ticker">${r.ticker}</span></td>
+    <td style="font-family:var(--mono);font-size:12px">R$${r.fechamento.toFixed(2)}</td>
+    <td>${varBadge(r.varPct)}</td>
+    <td>${razaoCell(r)}</td>
+    <td>${bookCell(r)}</td>
+    <td style="font-family:var(--mono);font-size:11px;color:var(--text2)">${fmtNum(r.volume)}</td>
+    <td><div class="score-bar">
+      <div class="bar-bg"><div class="bar-fill" style="width:${r.score}%;background:${cor}"></div></div>
+      <span class="score-num" style="color:${cor}">${r.score}</span>
+    </div></td>
+    <td><div class="sinais">${sinais}</div></td>
+  </tr>`;
+}
+
+function rowAllHtml(r, i) {
+  const v = vies(r.score);
+  const cor = scoreCor(r.score);
+  const sinais = r.detalhes.map(s => `<span class="sinal-tag ${s.type}">${s.lbl}</span>`).join('');
+  return `<tr>
+    <td class="rank-num">${i+1}</td>
+    <td><span class="ticker">${r.ticker}</span></td>
+    <td style="font-family:var(--mono);font-size:12px">R$${r.fechamento.toFixed(2)}</td>
+    <td>${varBadge(r.varPct)}</td>
+    <td>${razaoCell(r)}</td>
+    <td style="font-family:var(--mono);font-size:11px;color:var(--green)">${fmtNum(r.agCompra)}</td>
+    <td style="font-family:var(--mono);font-size:11px;color:var(--red)">${fmtNum(r.agVenda)}</td>
+    <td style="font-family:var(--mono);font-size:11px;color:var(--green)">${fmtNum(r.voc)}</td>
+    <td style="font-family:var(--mono);font-size:11px;color:var(--red)">${fmtNum(r.vov)}</td>
+    <td style="font-family:var(--mono);font-size:11px;color:var(--text2)">${fmtNum(r.volume)}</td>
+    <td style="font-family:var(--mono);font-size:11px;color:var(--text2)">${r.negocios.toFixed(0)}</td>
+    <td><div class="score-bar">
+      <div class="bar-bg"><div class="bar-fill" style="width:${r.score}%;background:${cor}"></div></div>
+      <span class="score-num" style="color:${cor}">${r.score}</span>
+    </div></td>
+    <td><span class="badge ${v.cls}">${v.label}</span></td>
+    <td><div class="sinais">${sinais}</div></td>
+  </tr>`;
+}
+
+function renderTblAll(dados) {
+  let lista = dados;
+  if (filtroAtual === 'alta') lista = dados.filter(r => r.score >= 60);
+  else if (filtroAtual === 'baixa') lista = dados.filter(r => r.score <= 40);
+  else if (filtroAtual === 'neutro') lista = dados.filter(r => r.score > 40 && r.score < 60);
+  document.getElementById('tblAll').innerHTML = lista.map((r,i) => rowAllHtml(r,i)).join('');
+  document.getElementById('totalLabel').textContent = lista.length + ' de ' + dados.length + ' ativos';
+}
+
+function processar() {
+  const txt = document.getElementById('csvInput').value;
+  const err = document.getElementById('erroMsg');
+  const warn = document.getElementById('warnMsg');
+  err.style.display = 'none';
+  warn.style.display = 'none';
+
+  const { dados: todos } = parsear(txt);
+  if (!todos.length) {
+    err.textContent = 'Nenhuma linha válida. Verifique se colou os dados corretamente. Clique em Carregar Exemplo para ver o formato esperado.';
+    err.style.display = 'block';
+    return;
+  }
+
+  const cfg = getConfig();
+
+  // Aplicar filtros de volume e negócios
+  const dados = todos.filter(r => r.volume >= cfg.volMin && r.negocios >= cfg.negMin);
+  const removidos = todos.length - dados.length;
+
+  if (dados.length < 10) {
+    warn.textContent = `Apenas ${dados.length} ações passaram no filtro. Considere reduzir o volume mínimo.`;
+    warn.style.display = 'block';
+  }
+
+  if (!dados.length) {
+    err.textContent = 'Nenhuma ação passou no filtro de volume. Reduza o volume mínimo nas configurações.';
+    err.style.display = 'block';
+    return;
+  }
+
+  const medVol = mediana(dados.map(r => r.volume));
+  const medNeg = mediana(dados.map(r => r.negocios));
+
+  dados.forEach(r => {
+    const res = calcScore(r, cfg, medVol, medNeg);
+    r.score    = res.score;
+    r.detalhes = res.detalhes;
+    r.razao    = res.razao;
+    r.saldoBook= res.saldoBook;
   });
-  dados.sort((a,b)=>b.score-a.score);
-  const agora=new Date();
-  const rankData={
-    dados:dados.map(r=>({...r,detalhes:r.detalhes.map(d=>({lbl:d.lbl,type:d.type}))})),
-    totalBruto:todos.length, volMin:cfg.volMin/1e6, negMin:cfg.negMin,
-    dataPublicacao:agora.toLocaleDateString('pt-BR')+' '+agora.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})
-  };
-  try {
-    await setDoc(doc(db,'ranking','atual'),rankData);
-    showAdminMsg('info','✅ Ranking publicado! '+dados.length+' ações — '+dados.filter(r=>r.score>=60).length+' compra / '+dados.filter(r=>r.score<=40).length+' venda.');
-    renderRanking(rankData);
-    updateAdminStats();
-  } catch(e){ showAdminMsg('err','Erro ao publicar: '+e.message); }
+
+  dados.sort((a,b) => b.score - a.score);
+  dadosGlobais = todos;
+  dadosFiltrados = dados;
+
+  // Info do filtro
+  // Mostra diagnostico do filtro com exemplo dos dados lidos
+  const ex = todos[0];
+  const exVol = ex ? (ex.volume >= 1e6 ? (ex.volume/1e6).toFixed(1)+'M' : ex.volume.toFixed(0)) : '?';
+  const fi = document.getElementById('filterInfo');
+  fi.style.display = 'block';
+  const semDados = dados.filter(r => !r._dadosValidos).length;
+  const avisoAgr = semDados > dados.length * 0.3
+    ? ` &nbsp;|&nbsp; <span style="color:var(--yellow)">⚠ ${semDados} ações sem Ag.Compra/Venda — verifique exportação do Profit</span>`
+    : '';
+  fi.innerHTML = `Filtro: vol &gt; R$${cfg.volMin/1e6}M · neg &gt; ${cfg.negMin} &nbsp;|&nbsp; <span style="color:var(--green)">${dados.length} aprovadas</span> · <span style="color:var(--red)">${removidos} removidas</span> &nbsp;|&nbsp; Ex. 1ª ação: <span style="color:var(--orange)">${ex ? ex.ticker : '?'}</span> vol=<span style="color:var(--orange)">${exVol}</span>${avisoAgr}`;
+
+  const compra = dados.filter(r => r.score >= 60).slice(0,10);
+  // Filtro de qualidade para venda:
+  // 1. Score <= 35 (sinal mais forte)
+  // 2. Dados de agressão válidos (_dadosValidos)
+  // 3. Pelo menos 2 sinais de venda confirmados
+  // Filtro de venda qualificado — exige Saldo Teórico negativo confirmado
+  const vendaQualificada = [...dados]
+    .filter(r => r.score <= 35 && r._sinaisVenda >= 1 && (r.saldoTeorico < 0 || r.saldoBook < 0))
+    .sort((a,b) => a.score - b.score)
+    .slice(0,10);
+  const venda = vendaQualificada.length >= 3
+    ? vendaQualificada
+    : [...dados].filter(r => r.score <= 40).sort((a,b) => a.score-b.score).slice(0,10);
+  const altaCount  = dados.filter(r => r.score >= 60).length;
+  const baixaCount = dados.filter(r => r.score <= 40).length;
+  const neutroCount= dados.filter(r => r.score > 40 && r.score < 60).length;
+  const avgScore   = Math.round(dados.reduce((a,r) => a+r.score,0)/dados.length);
+  const domCompra  = dados.filter(r => r.razao >= 50).length;
+  const pctFluxo   = Math.round(domCompra/dados.length*100);
+
+  document.getElementById('metricsRow').innerHTML = `
+    <div class="metric"><div class="metric-label">Aprovadas</div><div class="metric-value">${dados.length}<span style="font-size:11px;color:var(--text3)">/${todos.length}</span></div></div>
+    <div class="metric"><div class="metric-label">Fluxo compra</div><div class="metric-value up">${altaCount}</div></div>
+    <div class="metric"><div class="metric-label">Neutros</div><div class="metric-value yellow">${neutroCount}</div></div>
+    <div class="metric"><div class="metric-label">Fluxo venda</div><div class="metric-value down">${baixaCount}</div></div>
+    <div class="metric"><div class="metric-label">Score médio</div><div class="metric-value orange">${avgScore}</div></div>
+    <div class="metric"><div class="metric-label">Dom. compra</div><div class="metric-value ${pctFluxo>=50?'up':'down'}">${pctFluxo}%</div></div>
+  `;
+
+  document.getElementById('tblBodyCompra').innerHTML = compra.map((r,i) => rowHtml(r,i)).join('');
+  document.getElementById('countCompra').textContent = compra.length;
+  document.getElementById('tblBodyVenda').innerHTML = venda.map((r,i) => rowHtml(r,i)).join('');
+  document.getElementById('countVenda').textContent = venda.length;
+  renderTblAll(dados);
+  showPanel('result');
 }
 
-window.adminLimpar = function(){document.getElementById('adminCsvInput').value='';hideAdminMsgs();}
-
-window.renderUserList = async function() {
-  const el=document.getElementById('userList');
-  el.innerHTML='<div style="text-align:center;padding:1.5rem;color:var(--text3);font-size:13px">Carregando...</div>';
-  try {
-    const snap=await getDocs(collection(db,'users'));
-    const users=[];
-    snap.forEach(d=>{if(d.data().role!=='admin')users.push(d.data());});
-    if (!users.length){el.innerHTML='<div style="text-align:center;padding:2rem;color:var(--text3);font-size:13px">Nenhum usuário ainda.</div>';return;}
-    el.innerHTML=users.map(u=>`
-      <div class="user-row">
-        <div class="user-avatar-sm">${u.nome.charAt(0).toUpperCase()}</div>
-        <div class="user-info">
-          <div class="user-info-name">${u.nome}</div>
-          <div class="user-info-email">${u.email} · ${u.cel}</div>
-          <div class="user-info-email">CPF: ${u.cpf}</div>
-        </div>
-        <span class="user-status ${u.status==='active'?'status-active':'status-pending'}">${u.status==='active'?'ATIVO':'PENDENTE'}</span>
-        <div class="user-actions">
-          ${u.status==='pending'?`<button class="user-action-btn approve" onclick="approveUser('${u.uid}')">Aprovar</button>`:''}
-          <button class="user-action-btn remove" onclick="removeUser('${u.uid}')">Remover</button>
-        </div>
-      </div>
-    `).join('');
-  } catch(e){ el.innerHTML='<div style="color:var(--red);padding:1rem;font-size:12px">Erro ao carregar.</div>'; }
+function exportarCSV() {
+  if (!dadosFiltrados.length) return;
+  let csv = 'Rank,Ticker,Fechamento,Var%,Razao%,Ag.Compra,Ag.Venda,VOC,VOV,Saldo.Book,Volume,Negocios,Score,Vies,Sinais\n';
+  dadosFiltrados.forEach((r,i) => {
+    const v = vies(r.score);
+    const varStr = r.varPct !== null && !isNaN(r.varPct) ? r.varPct.toFixed(2) : '';
+    const sinStr = r.detalhes.map(d => d.lbl).join('; ');
+    csv += `${i+1},${r.ticker},${r.fechamento.toFixed(2)},${varStr},${r.razao},${r.agCompra},${r.agVenda},${r.voc},${r.vov},${r.saldoBook},${r.volume},${r.negocios},${r.score},${v.label},"${sinStr}"\n`;
+  });
+  const blob = new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8;'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `b3_fluxo_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
 }
 
-window.approveUser = async function(uid){
-  await updateDoc(doc(db,'users',uid),{status:'active'});
-  renderUserList(); updateAdminStats();
+function carregarExemplo() {
+  document.getElementById('csvInput').value = `TICKER,ULTIMO,SALDO.TEORICO,VOC,VOV,VOLUME,NEGOCIOS,VAR%
+PETR4,38.50,12500000,8200000,45000000,28000000,48500000,3840,1.45
+VALE3,72.10,8100000,9800000,22000000,35000000,32000000,2210,-0.80
+ITUB4,32.80,9200000,6100000,38000000,22000000,25000000,2980,0.62
+BBDC4,15.20,4100000,6800000,15000000,28000000,18000000,1840,-1.95
+WEGE3,48.60,3800000,2100000,18000000,9000000,8500000,920,2.10
+MGLU3,2.85,9100000,14200000,28000000,48000000,55000000,4210,-3.72
+RENT3,67.40,2900000,1800000,12000000,6500000,5200000,640,0.90
+ABEV3,11.90,5200000,7800000,18000000,32000000,22000000,1560,-1.23
+BBAS3,58.90,6800000,3900000,28000000,14000000,14000000,1320,1.88
+SUZB3,51.20,4100000,2800000,19000000,10000000,9800000,780,0.55
+RADL3,29.50,3200000,1900000,14000000,7500000,7800000,690,1.20
+EQTL3,29.80,2800000,1700000,12000000,6000000,6500000,580,0.78
+JBSS3,35.40,5100000,3200000,22000000,11000000,11200000,890,1.05
+LREN3,12.80,2100000,4800000,8000000,19000000,9300000,720,-2.44
+TOTS3,35.60,3400000,2200000,15000000,8000000,7100000,610,0.96
+HAPV3,3.90,7200000,12100000,22000000,38000000,31000000,2840,-3.11
+CIEL3,5.80,8100000,5900000,31000000,18000000,19500000,1680,0.87
+BRAP4,22.10,3900000,2600000,17000000,9500000,8900000,720,0.68
+PRIO3,45.80,6200000,4100000,26000000,13000000,13600000,1050,1.33
+CMIG4,11.50,5100000,3800000,21000000,12000000,12400000,980,0.44
+EGIE3,42.30,1800000,900000,8500000,3200000,3100000,280,1.10
+TAEE11,37.80,2200000,1400000,9800000,4100000,4800000,320,0.85
+KLBN11,22.10,3100000,1900000,13000000,6500000,6200000,510,0.72
+VIVT3,28.40,4200000,3100000,17000000,9800000,9100000,740,0.45
+EMBR3,52.60,5800000,3400000,24000000,11000000,12300000,960,1.65
+AZUL4,8.90,6100000,8900000,19000000,31000000,18500000,1420,-2.88
+GOLL4,5.20,7200000,10100000,21000000,38000000,22000000,1680,-4.10
+CSAN3,15.80,3400000,2100000,14000000,7000000,7600000,580,0.92
+RAIZ4,6.40,800000,1200000,2800000,5100000,1200000,95,-1.50
+GGBR4,21.30,4800000,3200000,19000000,10500000,10800000,870,0.88`;
 }
-window.removeUser = async function(uid){
-  if(!confirm('Remover este usuário?'))return;
-  await deleteDoc(doc(db,'users',uid));
-  renderUserList(); updateAdminStats();
-}
-window.updateAdminStats = async function(){
-  try {
-    const snap=await getDocs(collection(db,'users'));
-    let total=0,active=0,pending=0;
-    snap.forEach(d=>{if(d.data().role==='admin')return;total++;if(d.data().status==='active')active++;else pending++;});
-    document.getElementById('stat-total-users').textContent=total;
-    document.getElementById('stat-active-users').textContent=active;
-    document.getElementById('stat-pending-users').textContent=pending;
-    const rSnap=await getDoc(doc(db,'ranking','atual'));
-    document.getElementById('stat-last-update').textContent=rSnap.exists()?rSnap.data().dataPublicacao:'—';
-  } catch(e){}
-}
-
-// Criar admin automaticamente
-async function ensureAdmin(){
-  try {
-    const cred = await createUserWithEmailAndPassword(auth, ADMIN_EMAIL, 'tradeia2025');
-    await setDoc(doc(db,'users',cred.user.uid),{
-      uid:cred.user.uid, nome:'Administrador Trade IA', email:ADMIN_EMAIL,
-      cel:'(11) 99577-8307', cpf:'000.000.000-00',
-      status:'active', role:'admin', created:new Date().toISOString()
-    });
-  } catch(e){ /* admin já existe */ }
-}
-ensureAdmin();
 </script>
-
 </body>
 </html>
