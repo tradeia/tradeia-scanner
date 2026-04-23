@@ -644,11 +644,25 @@ function parseNum(s) {
   if (s === null || s === undefined) return NaN;
   let str = String(s).trim().replace(/%/g,'').replace(/R\$/g,'').trim();
   if (!str || str === '-') return NaN;
-  const lastDot = str.lastIndexOf('.');
+  const lastDot   = str.lastIndexOf('.');
   const lastComma = str.lastIndexOf(',');
-  if (lastComma > lastDot) { str = str.replace(/\./g,'').replace(',','.'); }
-  else if (lastDot > lastComma) { str = str.replace(/,/g,''); }
-  else { str = str.replace(/[.,]/g,''); }
+  const dotCount  = (str.match(/\./g)||[]).length;
+  const commaCount= (str.match(/,/g)||[]).length;
+  if (lastComma > lastDot) {
+    // BR format: 1.234,56 ou 1.234 (milhar) — remove pontos, troca virgula
+    str = str.replace(/\./g,'').replace(',','.');
+  } else if (lastDot > lastComma) {
+    // EN format: 1,234.56 — remove virgulas
+    str = str.replace(/,/g,'');
+  } else if (dotCount === 1 && commaCount === 0) {
+    // Pode ser milhar BR: 65.900 → 65900
+    // Se parte decimal tiver 3 digitos, é milhar
+    const parts = str.split('.');
+    if (parts[1] && parts[1].length === 3) {
+      str = str.replace('.',''); // 65.900 → 65900
+    }
+    // senão deixa como está (decimal EN)
+  }
   return parseFloat(str);
 }
 function parsear(txt) {
@@ -656,23 +670,54 @@ function parsear(txt) {
   const primeira = linhasRaw[0] || '';
   const nTab = (primeira.match(/\t/g)||[]).length;
   const nPV  = (primeira.match(/;/g)||[]).length;
-  const usaTab = nTab >= 7;
-  const usaPV  = nPV >= 7;
-  const linhas = linhasRaw;
+  const usaTab = nTab >= 4;
+  const usaPV  = nPV >= 4;
+
+  // Parse decimal BR (virgula = decimal): "4,57" → 4.57 | "-1,69" → -1.69
+  function parseDecBR(s) {
+    if (!s && s !== 0) return NaN;
+    let str = String(s).trim().replace(/%/g,'').replace(/R\$/g,'');
+    if (!str || str === '-') return NaN;
+    str = str.replace(/\./g,'').replace(',','.');
+    return parseFloat(str);
+  }
+
+  // Parse inteiro BR (ponto = milhar): "65.900" → 65900 | "-15.300" → -15300
+  function parseIntBR(s) {
+    if (!s && s !== 0) return 0;
+    let str = String(s).trim().replace(/%/g,'').replace(/R\$/g,'');
+    if (!str || str === '-') return 0;
+    // Remove pontos de milhar e virgulas
+    str = str.replace(/\./g,'').replace(/,/g,'');
+    const n = parseFloat(str);
+    return isNaN(n) ? 0 : n;
+  }
+
+  // Parse volume (sem separador de milhar mas pode ter virgula): "73712404" ou "73.712.404"
+  function parseVol(s) {
+    if (!s && s !== 0) return 0;
+    let str = String(s).trim().replace(/\./g,'').replace(/,/g,'.');
+    const n = parseFloat(str);
+    return isNaN(n) ? 0 : n;
+  }
+
   const res = [];
-  for (const linha of linhas) {
+  for (const linha of linhasRaw) {
     const p = usaTab ? linha.split('\t') : usaPV ? linha.split(';') : linha.split(',');
     const pp = p.map(x => x.trim().replace(/^"|"$/g,'').trim());
-    if (pp.length < 8) continue;
-    if (isNaN(parseNum(pp[1]))) continue;
+    if (pp.length < 5) continue;
+    if (isNaN(parseDecBR(pp[1]))) continue; // pula cabecalho
     const r = {
-      ticker: pp[0].toUpperCase().replace(/[^A-Z0-9]/g,''),
-      fechamento:parseNum(pp[1]), agCompra:parseNum(pp[2]), agVenda:parseNum(pp[3]),
-      voc:parseNum(pp[4]), vov:parseNum(pp[5]), volume:parseNum(pp[6]),
-      negocios:parseNum(pp[7]), varPct:pp.length>=9?parseNum(pp[8]):null
+      ticker:       pp[0].toUpperCase().replace(/[^A-Z0-9]/g,''),
+      fechamento:   parseDecBR(pp[1]),
+      saldoTeorico: parseIntBR(pp[2]),
+      voc:          parseIntBR(pp[3]),
+      vov:          parseIntBR(pp[4]),
+      volume:       pp.length > 5 ? parseVol(pp[5]) : 0,
+      negocios:     pp.length > 6 ? parseIntBR(pp[6]) : 0,
+      varPct:       pp.length > 7 ? parseDecBR(pp[7]) : null
     };
-    if (!r.ticker) continue;
-    if ([r.fechamento,r.agCompra,r.agVenda,r.voc,r.vov,r.volume,r.negocios].some(v=>isNaN(v))) continue;
+    if (!r.ticker || isNaN(r.fechamento)) continue;
     res.push(r);
   }
   return res;
@@ -684,18 +729,43 @@ function mediana(arr) {
 }
 function calcScore(r, cfg, medVol, medNeg) {
   let s=0, d=[];
-  const total=r.agCompra+r.agVenda, razao=total>0?(r.agCompra/total)*100:50, saldoBook=r.voc-r.vov;
-  if (razao>=cfg.limiarBuy){s+=35;d.push({lbl:'AGR++',type:'buy'});}
-  else if (razao>=50){s+=20;d.push({lbl:'AGR+',type:'buy'});}
-  else if (razao<=(100-cfg.limiarBuy)){d.push({lbl:'AGR--',type:'sell'});}
-  else{d.push({lbl:'AGR-',type:'sell'});}
-  if (razao>=50&&razao<cfg.limiarBuy){s+=10;d.push({lbl:'MOD+',type:'buy'});}
-  if (saldoBook>0){s+=25;d.push({lbl:'VOC+',type:'buy'});}else{d.push({lbl:'VOV+',type:'sell'});}
-  if (r.varPct!==null&&r.varPct>0){s+=20;d.push({lbl:'VAR+',type:'buy'});}
-  else if (r.varPct!==null&&r.varPct<0){d.push({lbl:'VAR-',type:'sell'});}
+  const saldoBook = r.voc - r.vov;
+  const bookValido = (r.voc + r.vov) > 0;
+  // 1. Saldo Teorico (35pts)
+  if (r.saldoTeorico > 1000)       { s+=35; d.push({lbl:'ST++',type:'buy'}); }
+  else if (r.saldoTeorico > 0)     { s+=20; d.push({lbl:'ST+', type:'buy'}); }
+  else if (r.saldoTeorico < -1000) { d.push({lbl:'ST--',type:'sell'}); }
+  else if (r.saldoTeorico < 0)     { d.push({lbl:'ST-', type:'sell'}); }
+  // 2. VOC vs VOV (25pts)
+  if (bookValido) {
+    if (saldoBook>0){s+=25;d.push({lbl:'VOC+',type:'buy'});}
+    else{d.push({lbl:'VOV+',type:'sell'});}
+  }
+  // 3. Variacao % (20pts)
+  if (r.varPct!==null&&r.varPct>0.3){s+=20;d.push({lbl:'VAR+',type:'buy'});}
+  else if (r.varPct!==null&&r.varPct<-0.3){d.push({lbl:'VAR-',type:'sell'});}
+  // 4. Volume (10pts)
   if (r.volume>=medVol){s+=10;d.push({lbl:'VOL+',type:'buy'});}
+  // 5. Negocios (10pts)
   if (r.negocios>=medNeg){s+=10;d.push({lbl:'NEG+',type:'buy'});}
-  return{score:Math.min(s,100),detalhes:d,razao:Math.round(razao),saldoBook};
+  // Score venda simetrico
+  let vendaScore=0;
+  if (r.saldoTeorico<-1000){vendaScore+=35;}
+  else if (r.saldoTeorico<0){vendaScore+=20;}
+  if (bookValido&&saldoBook<0){vendaScore+=25;}
+  if (r.varPct!==null&&r.varPct<-0.3){vendaScore+=20;}
+  if (r.volume>=medVol){vendaScore+=10;}
+  if (r.negocios>=medNeg){vendaScore+=10;}
+  const sinaisVenda=d.filter(x=>x.type==='sell').length;
+  let score;
+  if (vendaScore>s&&sinaisVenda>=1){score=Math.max(0,50-vendaScore);}
+  else{score=Math.min(100,s);}
+  r._sinaisVenda=sinaisVenda;
+  r._dadosValidos=bookValido;
+  r.saldoBook=saldoBook;
+  const totalBook=r.voc+r.vov;
+  const razao=totalBook>0?Math.round((r.voc/totalBook)*100):50;
+  return{score:Math.round(score),detalhes:d,razao,saldoBook};
 }
 function vies(s){if(s>=60)return{label:'Alta',cls:'badge-up'};if(s<=40)return{label:'Baixa',cls:'badge-down'};return{label:'Neutro',cls:'badge-neut'};}
 function scoreCor(s){if(s>=60)return'var(--green)';if(s<=40)return'var(--red)';return'var(--text3)';}
@@ -711,9 +781,13 @@ function razaoCell(r){
   return`<div class="razao-bar"><div class="razao-wrap"><div class="razao-fill" style="width:${r.razao}%;background:${fc}"></div></div><span style="font-family:var(--mono);font-size:11px;font-weight:600;color:${cor};min-width:32px">${r.razao}%</span></div>`;
 }
 function bookCell(r){const s=r.voc-r.vov,cor=s>0?'var(--green)':'var(--red)';return`<span style="font-family:var(--mono);font-size:11px;font-weight:600;color:${cor}">${fmtNum(s)}</span>`;}
+function saldoTeoricoCell(r){
+  const v=r.saldoTeorico||0,cor=v>0?'var(--green)':v<0?'var(--red)':'var(--text3)',sinal=v>0?'+':'';
+  return`<span style="font-family:var(--mono);font-size:11px;font-weight:600;color:${cor}">${sinal}${fmtNum(v)}</span>`;
+}
 function rowHtml(r,i){
   const v=vies(r.score),cor=scoreCor(r.score),sinais=r.detalhes.map(s=>`<span class="sinal-tag ${s.type}">${s.lbl}</span>`).join('');
-  return`<tr><td class="rank-num">${i+1}</td><td><span class="ticker">${r.ticker}</span></td><td style="font-family:var(--mono);font-size:12px">R$${r.fechamento.toFixed(2)}</td><td>${varBadge(r.varPct)}</td><td>${razaoCell(r)}</td><td>${bookCell(r)}</td><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">${fmtNum(r.volume)}</td><td><div class="score-bar"><div class="bar-bg"><div class="bar-fill" style="width:${r.score}%;background:${cor}"></div></div><span class="score-num" style="color:${cor}">${r.score}</span></div></td><td><div class="sinais">${sinais}</div></td></tr>`;
+  return`<tr><td class="rank-num">${i+1}</td><td><span class="ticker">${r.ticker}</span></td><td style="font-family:var(--mono);font-size:12px">R$${r.fechamento.toFixed(2)}</td><td>${varBadge(r.varPct)}</td><td>${saldoTeoricoCell(r)}</td><td>${bookCell(r)}</td><td style="font-family:var(--mono);font-size:11px;color:var(--text2)">${fmtNum(r.volume)}</td><td><div class="score-bar"><div class="bar-bg"><div class="bar-fill" style="width:${r.score}%;background:${cor}"></div></div><span class="score-num" style="color:${cor}">${r.score}</span></div></td><td><div class="sinais">${sinais}</div></td></tr>`;
 }
 function rowAllHtml(r,i){
   const v=vies(r.score),cor=scoreCor(r.score),sinais=r.detalhes.map(s=>`<span class="sinal-tag ${s.type}">${s.lbl}</span>`).join('');
