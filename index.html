@@ -731,41 +731,71 @@ function calcScore(r, cfg, medVol, medNeg) {
   let s=0, d=[];
   const saldoBook = r.voc - r.vov;
   const bookValido = (r.voc + r.vov) > 0;
-  // 1. Saldo Teorico (35pts)
-  if (r.saldoTeorico > 1000)       { s+=35; d.push({lbl:'ST++',type:'buy'}); }
-  else if (r.saldoTeorico > 0)     { s+=20; d.push({lbl:'ST+', type:'buy'}); }
-  else if (r.saldoTeorico < -1000) { d.push({lbl:'ST--',type:'sell'}); }
-  else if (r.saldoTeorico < 0)     { d.push({lbl:'ST-', type:'sell'}); }
-  // 2. VOC vs VOV (25pts)
+
+  // ---- SCORE DE COMPRA ----
+  // 1. Saldo Teorico (40pts) — principal indicador
+  if (r.saldoTeorico > 5000)       { s+=40; d.push({lbl:'ST++',type:'buy'}); }
+  else if (r.saldoTeorico > 500)   { s+=30; d.push({lbl:'ST+', type:'buy'}); }
+  else if (r.saldoTeorico > 0)     { s+=20; d.push({lbl:'ST~', type:'buy'}); }
+  else if (r.saldoTeorico < -5000) { d.push({lbl:'ST--',type:'sell'}); }
+  else if (r.saldoTeorico < -500)  { d.push({lbl:'ST-', type:'sell'}); }
+  else                             { d.push({lbl:'ST0', type:'sell'}); }
+
+  // 2. VOC vs VOV (30pts) — confirmacao do book
   if (bookValido) {
-    if (saldoBook>0){s+=25;d.push({lbl:'VOC+',type:'buy'});}
-    else{d.push({lbl:'VOV+',type:'sell'});}
+    const ratioVOC = r.voc / (r.voc + r.vov) * 100;
+    if (ratioVOC >= 65)      { s+=30; d.push({lbl:'VOC++',type:'buy'}); }
+    else if (ratioVOC >= 55) { s+=20; d.push({lbl:'VOC+', type:'buy'}); }
+    else if (ratioVOC >= 50) { s+=10; d.push({lbl:'VOC~', type:'buy'}); }
+    else if (ratioVOC <= 35) { d.push({lbl:'VOV++',type:'sell'}); }
+    else if (ratioVOC <= 45) { d.push({lbl:'VOV+', type:'sell'}); }
+    else                     { d.push({lbl:'VOV~', type:'sell'}); }
   }
-  // 3. Variacao % (20pts)
-  if (r.varPct!==null&&r.varPct>0.3){s+=20;d.push({lbl:'VAR+',type:'buy'});}
-  else if (r.varPct!==null&&r.varPct<-0.3){d.push({lbl:'VAR-',type:'sell'});}
+
+  // 3. Variacao % (15pts) — confirma direcao mas nao e obrigatoria
+  if (r.varPct!==null&&r.varPct>0.5)       { s+=15; d.push({lbl:'VAR+',type:'buy'}); }
+  else if (r.varPct!==null&&r.varPct>0)    { s+=8;  d.push({lbl:'VAR~',type:'buy'}); }
+  else if (r.varPct!==null&&r.varPct<-0.5) { d.push({lbl:'VAR-',type:'sell'}); }
+
   // 4. Volume (10pts)
   if (r.volume>=medVol){s+=10;d.push({lbl:'VOL+',type:'buy'});}
-  // 5. Negocios (10pts)
-  if (r.negocios>=medNeg){s+=10;d.push({lbl:'NEG+',type:'buy'});}
-  // Score venda simetrico
+
+  // 5. Negocios (5pts)
+  if (r.negocios>=medNeg){s+=5;d.push({lbl:'NEG+',type:'buy'});}
+
+  // ---- SCORE DE VENDA (simetrico) ----
   let vendaScore=0;
-  if (r.saldoTeorico<-1000){vendaScore+=35;}
-  else if (r.saldoTeorico<0){vendaScore+=20;}
-  if (bookValido&&saldoBook<0){vendaScore+=25;}
-  if (r.varPct!==null&&r.varPct<-0.3){vendaScore+=20;}
-  if (r.volume>=medVol){vendaScore+=10;}
-  if (r.negocios>=medNeg){vendaScore+=10;}
-  const sinaisVenda=d.filter(x=>x.type==='sell').length;
+  if (r.saldoTeorico < -5000)      { vendaScore+=40; }
+  else if (r.saldoTeorico < -500)  { vendaScore+=30; }
+  else if (r.saldoTeorico < 0)     { vendaScore+=20; }
+  if (bookValido) {
+    const ratioVOV = r.vov / (r.voc + r.vov) * 100;
+    if (ratioVOV >= 65)      { vendaScore+=30; }
+    else if (ratioVOV >= 55) { vendaScore+=20; }
+    else if (ratioVOV >= 50) { vendaScore+=10; }
+  }
+  if (r.varPct!==null&&r.varPct<-0.5) { vendaScore+=15; }
+  else if (r.varPct!==null&&r.varPct<0){ vendaScore+=8; }
+  if (r.volume>=medVol)   { vendaScore+=10; }
+  if (r.negocios>=medNeg) { vendaScore+=5; }
+
+  const sinaisVenda  = d.filter(x=>x.type==='sell').length;
+  const sinaisCompra = d.filter(x=>x.type==='buy').length;
+
   let score;
-  if (vendaScore>s&&sinaisVenda>=1){score=Math.max(0,50-vendaScore);}
-  else{score=Math.min(100,s);}
-  r._sinaisVenda=sinaisVenda;
-  r._dadosValidos=bookValido;
-  r.saldoBook=saldoBook;
-  const totalBook=r.voc+r.vov;
-  const razao=totalBook>0?Math.round((r.voc/totalBook)*100):50;
-  return{score:Math.round(score),detalhes:d,razao,saldoBook};
+  if (vendaScore > s && sinaisVenda >= 1) {
+    score = Math.max(0, 50 - vendaScore);
+  } else {
+    score = Math.min(100, s);
+  }
+
+  r._sinaisVenda  = sinaisVenda;
+  r._sinaisCompra = sinaisCompra;
+  r._dadosValidos = bookValido;
+  r.saldoBook     = saldoBook;
+  const totalBook = r.voc + r.vov;
+  const razao     = totalBook > 0 ? Math.round((r.voc/totalBook)*100) : 50;
+  return { score: Math.round(score), detalhes:d, razao, saldoBook };
 }
 function vies(s){if(s>=60)return{label:'Alta',cls:'badge-up'};if(s<=40)return{label:'Baixa',cls:'badge-down'};return{label:'Neutro',cls:'badge-neut'};}
 function scoreCor(s){if(s>=60)return'var(--green)';if(s<=40)return'var(--red)';return'var(--text3)';}
@@ -924,10 +954,12 @@ window.loadRanking = async function() {
 
 window.adminPublicar = async function() {
   const txt = document.getElementById('adminCsvInput').value;
+  const volMinVal = document.getElementById('volMin').value;
+  const negMinVal = document.getElementById('negMin').value;
   const cfg = {
-    volMin:(parseFloat(document.getElementById('volMin').value)||5)*1e6,
-    negMin:parseFloat(document.getElementById('negMin').value)||200,
-    limiarBuy:parseFloat(document.getElementById('limiarBuy').value)||60,
+    volMin: (volMinVal === '' ? 5 : parseFloat(volMinVal)) * 1e6,
+    negMin: negMinVal === '' ? 200 : parseFloat(negMinVal),
+    limiarBuy: parseFloat(document.getElementById('limiarBuy').value) || 60,
   };
   hideAdminMsgs();
   const todos = parsear(txt);
