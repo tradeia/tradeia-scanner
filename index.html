@@ -1161,7 +1161,11 @@ window.carregarAlavancagemFirebase = async function() {
       const rd = snap.data();
       window.rankingGlobal = rd;
       if (alvContent) alvContent.style.display = 'block';
-      if (typeof calcularAlavancagem === 'function') calcularAlavancagem();
+      if (loading) loading.style.display = 'none';
+      // Small delay to ensure DOM is ready
+      setTimeout(function() {
+        if (typeof calcularAlavancagem === 'function') calcularAlavancagem();
+      }, 200);
     } else {
       if (noData) noData.style.display = 'block';
     }
