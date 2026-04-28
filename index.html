@@ -740,7 +740,7 @@ window.showSubPanel = function showSubPanel(panel, btn) {
   showSubPanelRaw(panel);
   document.querySelectorAll('.app-tab').forEach(t => t.classList.remove('active'));
   if (btn) btn.classList.add('active');
-  if (panel === 'alavancagem') abrirAlavancagem(rankingGlobal);
+  if (panel === 'alavancagem') abrirAlavancagem(window.rankingGlobal);
 }
 window.showSubPanelRaw = function showSubPanelRaw(panel) {
   document.querySelectorAll('.sub-panel').forEach(p => p.classList.remove('active'));
@@ -974,7 +974,7 @@ function renderRanking(rankData){
   document.getElementById('countVenda').textContent=venda.length;
   renderTblAll(dados);
   // Atualiza aba de alavancagem automaticamente
-  if (rankingGlobal !== undefined) abrirAlavancagem(rankData);
+  window.rankingGlobal = rankData; if (typeof abrirAlavancagem === "function") abrirAlavancagem(rankData);
 }
 function hideAdminMsgs(){['admin-err','admin-warn','admin-info'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});}
 function showAdminMsg(type,msg){const map={err:'admin-err',warn:'admin-warn',info:'admin-info'};const el=document.getElementById(map[type]);if(!el)return;el.textContent=msg;el.style.display='block';}
@@ -1093,8 +1093,10 @@ window.adminPublicar = async function() {
   try {
     await setDoc(doc(db,'ranking','atual'),rankData);
     showAdminMsg('info','✅ Ranking publicado! '+dados.length+' ações — '+dados.filter(r=>r.score>=60).length+' compra / '+dados.filter(r=>r.score<=40).length+' venda.');
+    window.rankingGlobal = rankData;
     renderRanking(rankData);
     updateAdminStats();
+    if (typeof abrirAlavancagem === 'function') abrirAlavancagem(rankData);
   } catch(e){ showAdminMsg('err','Erro ao publicar: '+e.message); }
 }
 
