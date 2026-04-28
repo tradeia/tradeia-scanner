@@ -251,6 +251,36 @@ textarea.admin-input::placeholder{color:var(--text3)}
 .pending-title{font-family:var(--display);font-size:22px;font-weight:700;color:var(--yellow)}
 .pending-sub{font-size:14px;color:var(--text2);max-width:400px;line-height:1.7}
 
+/* ALAVANCAGEM */
+.alav-grid{display:grid;grid-template-columns:340px 1fr;gap:1.5rem;margin-bottom:1.5rem}
+@media(max-width:900px){.alav-grid{grid-template-columns:1fr}}
+.alav-config{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:1.5rem}
+.alav-config-title{font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--text3);margin-bottom:1.2rem}
+.alav-field{margin-bottom:1rem}
+.alav-label{font-size:12px;color:var(--text2);margin-bottom:5px;display:block}
+.alav-input{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:var(--mono);font-size:14px;padding:9px 12px;outline:none;transition:border-color .2s}
+.alav-input:focus{border-color:var(--blue)}
+.alav-recom{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:1rem;margin-top:1rem}
+.alav-recom-title{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.7px;margin-bottom:.7rem}
+.signal-badge{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600;font-family:var(--mono)}
+.signal-forte{background:rgba(0,229,160,.15);color:var(--green);border:1px solid rgba(0,229,160,.3)}
+.signal-bom{background:rgba(77,159,255,.15);color:var(--blue);border:1px solid rgba(77,159,255,.3)}
+.signal-mod{background:rgba(245,200,66,.15);color:var(--yellow);border:1px solid rgba(245,200,66,.3)}
+.signal-caut{background:rgba(255,77,106,.15);color:var(--red);border:1px solid rgba(255,77,106,.3)}
+.alav-table{width:100%;border-collapse:collapse;font-size:13px}
+.alav-table thead{background:var(--bg3)}
+.alav-table th{text-align:left;padding:8px 12px;font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.7px;white-space:nowrap}
+.alav-table td{padding:10px 12px;border-bottom:1px solid var(--border);color:var(--text);vertical-align:middle}
+.alav-table tr:last-child td{border-bottom:none}
+.alav-table tr:hover td{background:rgba(255,255,255,.02)}
+.alav-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.alav-card-header{padding:.9rem 1.25rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.alav-card-title{font-size:13px;font-weight:600}
+.strength-dot{width:10px;height:10px;border-radius:50%;display:inline-block;margin-right:6px}
+.forte{background:var(--green)}.bom{background:var(--blue)}.mod{background:var(--yellow)}.evitar{background:var(--red)}
+.total-row{background:var(--bg3);border-top:2px solid var(--border2)!important}
+.total-row td{font-weight:600;color:var(--text)}
+.alav-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:1.5rem}
 /* LOGO SVG inline */
 .logo-svg-el{display:block}
 </style>
@@ -403,6 +433,7 @@ textarea.admin-input::placeholder{color:var(--text3)}
     </div>
     <nav class="app-nav">
       <button class="app-tab active" onclick="showSubPanel('scanner',this)">Scanner</button>
+      <button class="app-tab" onclick="showSubPanel('alavancagem',this)" id="alav-tab-btn">Alavancagem</button>
       <button class="app-tab" onclick="showSubPanel('guia',this)">Como Usar</button>
       <button class="app-tab admin-tab" id="admin-tab-btn" onclick="showSubPanel('admin',this)" style="display:none">Admin ⚙️</button>
     </nav>
@@ -483,6 +514,83 @@ textarea.admin-input::placeholder{color:var(--text3)}
         <div style="font-size:48px;margin-bottom:1rem">📊</div>
         <div>Nenhum dado disponível ainda.</div>
         <div style="font-size:12px;margin-top:6px">O administrador ainda não publicou o ranking de hoje.</div>
+      </div>
+    </div>
+
+    <!-- ALAVANCAGEM -->
+    <div id="sub-alavancagem" class="sub-panel">
+      <div id="alav-no-data" style="text-align:center;padding:3rem;color:var(--text3);font-size:14px">
+        <div style="font-size:48px;margin-bottom:1rem">📐</div>
+        <div>Aguardando dados do ranking.</div>
+        <div style="font-size:12px;margin-top:6px">Vá para a aba Scanner primeiro para carregar o ranking do dia.</div>
+      </div>
+      <div id="alav-content" style="display:none">
+        <!-- Resumo do dia -->
+        <div class="alav-summary" id="alavSummary"></div>
+
+        <div class="alav-grid">
+          <!-- Config -->
+          <div class="alav-config">
+            <div class="alav-config-title">Configuração de Alavancagem</div>
+            <div class="alav-field">
+              <label class="alav-label">Capital disponível (R$)</label>
+              <input class="alav-input" id="capitalTotal" type="number" value="50000" min="1000" step="1000" oninput="calcularAlavancagem()">
+            </div>
+            <div class="alav-field">
+              <label class="alav-label">Dividir entre quantos ativos</label>
+              <select class="alav-input" id="numAtivos" onchange="calcularAlavancagem()">
+                <option value="auto">Automático (baseado nos sinais)</option>
+                <option value="3">Top 3</option>
+                <option value="5">Top 5</option>
+                <option value="10">Top 10</option>
+              </select>
+            </div>
+            <div class="alav-field">
+              <label class="alav-label">Lote mínimo por ativo</label>
+              <input class="alav-input" id="loteMin" type="number" value="100" min="100" step="100" oninput="calcularAlavancagem()">
+            </div>
+
+            <div class="alav-recom" id="recomendacao">
+              <div class="alav-recom-title">Recomendação do dia</div>
+              <div id="recomTexto"></div>
+            </div>
+          </div>
+
+          <!-- Tabelas -->
+          <div style="display:flex;flex-direction:column;gap:1.5rem">
+            <!-- Compra -->
+            <div class="alav-card">
+              <div class="alav-card-header">
+                <span class="alav-card-title" style="color:var(--green)">Compra — Ordem de Entrada</span>
+                <span id="totalCompraLabel" style="font-family:var(--mono);font-size:12px;color:var(--text3)"></span>
+              </div>
+              <div class="tbl-scroll">
+                <table class="alav-table">
+                  <thead><tr>
+                    <th>Força</th><th>Ativo</th><th>Preço</th><th>VAR%</th><th>Score</th><th>Qtd Lotes</th><th>Volume R$</th><th>Entrar?</th>
+                  </tr></thead>
+                  <tbody id="alavCompraBody"></tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Venda -->
+            <div class="alav-card">
+              <div class="alav-card-header">
+                <span class="alav-card-title" style="color:var(--red)">Venda — Ordem de Entrada</span>
+                <span id="totalVendaLabel" style="font-family:var(--mono);font-size:12px;color:var(--text3)"></span>
+              </div>
+              <div class="tbl-scroll">
+                <table class="alav-table">
+                  <thead><tr>
+                    <th>Força</th><th>Ativo</th><th>Preço</th><th>VAR%</th><th>Score</th><th>Qtd Lotes</th><th>Volume R$</th><th>Entrar?</th>
+                  </tr></thead>
+                  <tbody id="alavVendaBody"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -632,6 +740,7 @@ window.showSubPanel = function showSubPanel(panel, btn) {
   showSubPanelRaw(panel);
   document.querySelectorAll('.app-tab').forEach(t => t.classList.remove('active'));
   if (btn) btn.classList.add('active');
+  if (panel === 'alavancagem') abrirAlavancagem(rankingGlobal);
 }
 window.showSubPanelRaw = function showSubPanelRaw(panel) {
   document.querySelectorAll('.sub-panel').forEach(p => p.classList.remove('active'));
@@ -864,6 +973,8 @@ function renderRanking(rankData){
   document.getElementById('tblBodyVenda').innerHTML=venda.map((r,i)=>rowHtml(r,i)).join('');
   document.getElementById('countVenda').textContent=venda.length;
   renderTblAll(dados);
+  // Atualiza aba de alavancagem automaticamente
+  if (rankingGlobal !== undefined) abrirAlavancagem(rankData);
 }
 function hideAdminMsgs(){['admin-err','admin-warn','admin-info'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});}
 function showAdminMsg(type,msg){const map={err:'admin-err',warn:'admin-warn',info:'admin-info'};const el=document.getElementById(map[type]);if(!el)return;el.textContent=msg;el.style.display='block';}
