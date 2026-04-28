@@ -743,7 +743,8 @@ window.showSubPanel = function showSubPanel(panel, btn) {
   if (panel === 'alavancagem') {
     let rd = window.rankingGlobal;
     if (!rd) { try { const c = localStorage.getItem('tia_ranking_cache'); if(c) rd = JSON.parse(c); } catch(e){} }
-    abrirAlavancagem(rd);
+    if (rd) { abrirAlavancagem(rd); }
+    else { window.carregarAlavancagemFirebase && window.carregarAlavancagemFirebase(); }
   }
 }
 window.showSubPanelRaw = function showSubPanelRaw(panel) {
@@ -1153,6 +1154,24 @@ window.updateAdminStats = async function(){
     const rSnap=await getDoc(doc(db,'ranking','atual'));
     document.getElementById('stat-last-update').textContent=rSnap.exists()?rSnap.data().dataPublicacao:'—';
   } catch(e){}
+}
+
+// Carregar alavancagem direto do Firebase quando necessario
+window.carregarAlavancagemFirebase = async function() {
+  try {
+    const snap = await getDoc(doc(db,'ranking','atual'));
+    if (snap.exists()) {
+      const rd = snap.data();
+      window.rankingGlobal = rd;
+      localStorage.setItem('tia_ranking_cache', JSON.stringify(rd));
+      if (typeof abrirAlavancagem === 'function') abrirAlavancagem(rd);
+    } else {
+      document.getElementById('alav-no-data').style.display = 'block';
+      document.getElementById('alav-content').style.display = 'none';
+    }
+  } catch(e) {
+    console.error('Erro ao carregar alavancagem:', e);
+  }
 }
 
 // Criar admin automaticamente
