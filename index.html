@@ -519,17 +519,15 @@ textarea.admin-input::placeholder{color:var(--text3)}
 
     <!-- ALAVANCAGEM -->
     <div id="sub-alavancagem" class="sub-panel">
-      <div id="alav-no-data" style="text-align:center;padding:3rem;color:var(--text3);font-size:14px">
+      <div id="alav-loading" style="text-align:center;padding:2rem;color:var(--text3);font-size:13px">Carregando dados...</div>
+      <div id="alav-no-data" style="text-align:center;padding:3rem;color:var(--text3);font-size:14px;display:none">
         <div style="font-size:48px;margin-bottom:1rem">📐</div>
-        <div>Aguardando dados do ranking.</div>
-        <div style="font-size:12px;margin-top:6px">Vá para a aba Scanner primeiro para carregar o ranking do dia.</div>
+        <div>Nenhum ranking publicado ainda.</div>
+        <div style="font-size:12px;margin-top:6px">Publique um ranking no Admin primeiro.</div>
       </div>
       <div id="alav-content" style="display:none">
-        <!-- Resumo do dia -->
         <div class="alav-summary" id="alavSummary"></div>
-
         <div class="alav-grid">
-          <!-- Config -->
           <div class="alav-config">
             <div class="alav-config-title">Configuração de Alavancagem</div>
             <div class="alav-field">
@@ -549,16 +547,12 @@ textarea.admin-input::placeholder{color:var(--text3)}
               <label class="alav-label">Lote mínimo por ativo</label>
               <input class="alav-input" id="loteMin" type="number" value="100" min="100" step="100" oninput="calcularAlavancagem()">
             </div>
-
             <div class="alav-recom" id="recomendacao">
               <div class="alav-recom-title">Recomendação do dia</div>
               <div id="recomTexto"></div>
             </div>
           </div>
-
-          <!-- Tabelas -->
           <div style="display:flex;flex-direction:column;gap:1.5rem">
-            <!-- Compra -->
             <div class="alav-card">
               <div class="alav-card-header">
                 <span class="alav-card-title" style="color:var(--green)">Compra — Ordem de Entrada</span>
@@ -566,15 +560,11 @@ textarea.admin-input::placeholder{color:var(--text3)}
               </div>
               <div class="tbl-scroll">
                 <table class="alav-table">
-                  <thead><tr>
-                    <th>Força</th><th>Ativo</th><th>Preço</th><th>VAR%</th><th>Score</th><th>Qtd Lotes</th><th>Volume R$</th><th>Entrar?</th>
-                  </tr></thead>
+                  <thead><tr><th>Força</th><th>Ativo</th><th>Preço</th><th>VAR%</th><th>Score</th><th>Qtd Lotes</th><th>Volume R$</th><th>Entrar?</th></tr></thead>
                   <tbody id="alavCompraBody"></tbody>
                 </table>
               </div>
             </div>
-
-            <!-- Venda -->
             <div class="alav-card">
               <div class="alav-card-header">
                 <span class="alav-card-title" style="color:var(--red)">Venda — Ordem de Entrada</span>
@@ -582,9 +572,7 @@ textarea.admin-input::placeholder{color:var(--text3)}
               </div>
               <div class="tbl-scroll">
                 <table class="alav-table">
-                  <thead><tr>
-                    <th>Força</th><th>Ativo</th><th>Preço</th><th>VAR%</th><th>Score</th><th>Qtd Lotes</th><th>Volume R$</th><th>Entrar?</th>
-                  </tr></thead>
+                  <thead><tr><th>Força</th><th>Ativo</th><th>Preço</th><th>VAR%</th><th>Score</th><th>Qtd Lotes</th><th>Volume R$</th><th>Entrar?</th></tr></thead>
                   <tbody id="alavVendaBody"></tbody>
                 </table>
               </div>
@@ -594,6 +582,7 @@ textarea.admin-input::placeholder{color:var(--text3)}
       </div>
     </div>
 
+    <!-- GUIA -->
     <!-- GUIA -->
     <div id="sub-guia" class="sub-panel">
       <div class="guide-grid">
@@ -741,10 +730,9 @@ window.showSubPanel = function showSubPanel(panel, btn) {
   document.querySelectorAll('.app-tab').forEach(t => t.classList.remove('active'));
   if (btn) btn.classList.add('active');
   if (panel === 'alavancagem') {
-    let rd = window.rankingGlobal;
-    if (!rd) { try { const c = localStorage.getItem('tia_ranking_cache'); if(c) rd = JSON.parse(c); } catch(e){} }
-    if (rd) { abrirAlavancagem(rd); }
-    else { window.carregarAlavancagemFirebase && window.carregarAlavancagemFirebase(); }
+    setTimeout(function() {
+      if (window.carregarAlavancagemFirebase) window.carregarAlavancagemFirebase();
+    }, 100);
   }
 }
 window.showSubPanelRaw = function showSubPanelRaw(panel) {
