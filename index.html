@@ -532,11 +532,11 @@ textarea.admin-input::placeholder{color:var(--text3)}
             <div class="alav-config-title">Configuração de Alavancagem</div>
             <div class="alav-field">
               <label class="alav-label">Capital disponível (R$)</label>
-              <input class="alav-input" id="capitalTotal" type="number" value="50000" min="1000" step="1000" oninput="calcularAlavancagem()">
+              <input class="alav-input" id="capitalTotal" type="number" value="50000" min="1000" step="1000" oninput="if(typeof calcularAlavancagem==='function')calcularAlavancagem()">
             </div>
             <div class="alav-field">
               <label class="alav-label">Dividir entre quantos ativos</label>
-              <select class="alav-input" id="numAtivos" onchange="calcularAlavancagem()">
+              <select class="alav-input" id="numAtivos" onchange="if(typeof calcularAlavancagem==='function')calcularAlavancagem()">
                 <option value="auto">Automático (baseado nos sinais)</option>
                 <option value="3">Top 3</option>
                 <option value="5">Top 5</option>
@@ -545,7 +545,7 @@ textarea.admin-input::placeholder{color:var(--text3)}
             </div>
             <div class="alav-field">
               <label class="alav-label">Lote mínimo por ativo</label>
-              <input class="alav-input" id="loteMin" type="number" value="100" min="100" step="100" oninput="calcularAlavancagem()">
+              <input class="alav-input" id="loteMin" type="number" value="100" min="100" step="100" oninput="if(typeof calcularAlavancagem==='function')calcularAlavancagem()">
             </div>
             <div class="alav-recom" id="recomendacao">
               <div class="alav-recom-title">Recomendação do dia</div>
@@ -973,6 +973,78 @@ function renderRanking(rankData){
 }
 function hideAdminMsgs(){['admin-err','admin-warn','admin-info'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});}
 function showAdminMsg(type,msg){const map={err:'admin-err',warn:'admin-warn',info:'admin-info'};const el=document.getElementById(map[type]);if(!el)return;el.textContent=msg;el.style.display='block';}
+// ===================== ALAVANCAGEM =====================
+window.classifForca = function(r, side) {
+  const varPct = r.varPct || 0;
+  const varOk = side === 'compra' ? varPct > 0 : varPct < 0;
+  const stForte = side === 'compra' ? r.saldoTeorico > 5000 : r.saldoTeorico < -5000;
+  const stBom   = side === 'compra' ? r.saldoTeorico > 500  : r.saldoTeorico < -500;
+  const varForte = side === 'compra' ? varPct > 0.5 : varPct < -0.5;
+  const score = r.score || 0;
+  if (score >= 90 && stForte && varForte) return { label:'🔥 FORTE', cls:'signal-forte', nivel:4, entrar:true };
+  if (score >= 85 && stBom && varOk)     return { label:'✅ BOM',   cls:'signal-bom',   nivel:3, entrar:true };
+  if (score >= 80 && stBom)              return { label:'⚡ MOD',   cls:'signal-mod',   nivel:2, entrar:true };
+  if (!varOk && score < 85)              return { label:'❌ EVITAR', cls:'signal-caut',  nivel:0, entrar:false };
+  return                                        { label:'⚡ MOD',   cls:'signal-mod',   nivel:2, entrar:true };
+};
+
+window.calcularAlavancagem = function() {
+  const rankData = window.rankingGlobal;
+  if (!rankData || !rankData.dados || !rankData.dados.length) {
+    if (typeof window.carregarAlavancagemFirebase === 'function') window.carregarAlavancagemFirebase();
+    return;
+  }
+  const ac = document.getElementById('alav-content');
+  const nd = document.getElementById('alav-no-data');
+  if (ac) ac.style.display = 'block';
+  if (nd) nd.style.display = 'none';
+  const capital      = parseFloat(document.getElementById('capitalTotal').value) || 50000;
+  const loteMin      = parseFloat(document.getElementById('loteMin').value) || 100;
+  const numAtivosSel = document.getElementById('numAtivos').value;
+  const dados        = rankData.dados || [];
+  const compra = dados.filter(r => r.score >= 60).slice(0,10);
+  const venda  = [...dados].filter(r => r.score <= 35).sort((a,b) => a.score-b.score).slice(0,10);
+  const compraClass = compra.map(r => ({ ...r, forca: window.classifForca(r,'compra') }));
+  const vendaClass  = venda.map(r  => ({ ...r, forca: window.classifForca(r,'venda') }));
+  const fortesC = compraClass.filter(r => r.forca.nivel >= 4).length;
+  const bonsC   = compraClass.filter(r => r.forca.nivel >= 3).length;
+  const fortesV = vendaClass.filter(r  => r.forca.nivel >= 4).length;
+  const bonsV   = vendaClass.filter(r  => r.forca.nivel >= 3).length;
+  const totalF  = fortesC + fortesV;
+  const totalB  = bonsC + bonsV;
+  let numRec, recomMsg, recomCls;
+  if (totalF >= 4)    { numRec=10; recomMsg='Dia excelente — muitos sinais FORTES. Entra com Top 10.'; recomCls='signal-forte'; }
+  else if (totalF>=2) { numRec=5;  recomMsg='Dia bom — sinais FORTES presentes. Entra com Top 5.';     recomCls='signal-bom'; }
+  else if (totalB>=2) { numRec=3;  recomMsg='Dia moderado — sinais BOM/MOD. Entra com Top 3.';         recomCls='signal-mod'; }
+  else                { numRec=2;  recomMsg='Dia fraco — poucos sinais. Cautela: Top 2.';               recomCls='signal-caut'; }
+  const numFinal = numAtivosSel === 'auto' ? numRec : parseInt(numAtivosSel);
+  const recomEl = document.getElementById('recomTexto');
+  if (recomEl) recomEl.innerHTML = `<div style="margin-bottom:6px"><span class="signal-badge ${recomCls}" style="font-size:11px;padding:3px 10px">${recomMsg.split('—')[0].trim()}</span></div><div style="font-size:12px;color:var(--text2);line-height:1.6">${recomMsg}</div><div style="font-size:12px;color:var(--text2);margin-top:6px">FORTES: <b style="color:var(--green)">${fortesC}C/${fortesV}V</b> | BOM: <b style="color:var(--blue)">${bonsC}C/${bonsV}V</b></div>`;
+  const capitalPorLado = capital/2, capitalPorAtivo = capitalPorLado/numFinal;
+  function buildRows(lista, side, num) {
+    const rows = lista.slice(0,num); let totalVol=0, html='';
+    rows.forEach(r => {
+      const preco=r.fechamento||0, f=r.forca;
+      const lotes=f.entrar?Math.max(loteMin,Math.floor(capitalPorAtivo/preco/loteMin)*loteMin):0;
+      const volR=lotes*preco; totalVol+=volR;
+      const varStr=r.varPct!==null?(r.varPct>0?'+':'')+parseFloat(r.varPct).toFixed(2)+'%':'—';
+      const varCor=r.varPct>0?'var(--green)':r.varPct<0?'var(--red)':'var(--text3)';
+      const entrarCell=f.entrar?`<span style="color:var(--green);font-weight:600;font-family:var(--mono)">✅ SIM</span>`:`<span style="color:var(--red);font-weight:600;font-family:var(--mono)">❌ NÃO</span>`;
+      html+=`<tr><td><span class="signal-badge ${f.cls}" style="font-size:10px;padding:2px 8px">${f.label}</span></td><td style="font-family:var(--mono);font-weight:600">${r.ticker}</td><td style="font-family:var(--mono)">R$${preco.toFixed(2)}</td><td style="font-family:var(--mono);color:${varCor}">${varStr}</td><td style="font-family:var(--mono);color:${r.score>=90?'var(--green)':r.score>=80?'var(--blue)':'var(--text2)'}">${r.score}</td><td style="font-family:var(--mono);font-weight:600">${lotes.toLocaleString('pt-BR')}</td><td style="font-family:var(--mono)">R$${volR.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})}</td><td>${entrarCell}</td></tr>`;
+    });
+    html+=`<tr style="background:var(--bg3);border-top:2px solid var(--border2)"><td colspan="5" style="font-family:var(--mono);font-size:11px;color:var(--text3)">TOTAL ${side.toUpperCase()}</td><td></td><td style="font-family:var(--mono);font-weight:600;color:${side==='compra'?'var(--green)':'var(--red)'}">R$${totalVol.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})}</td><td></td></tr>`;
+    return {html,totalVol};
+  }
+  const c=buildRows(compraClass,'compra',numFinal), v=buildRows(vendaClass,'venda',numFinal);
+  const cb=document.getElementById('alavCompraBody'), vb=document.getElementById('alavVendaBody');
+  const tcl=document.getElementById('totalCompraLabel'), tvl=document.getElementById('totalVendaLabel');
+  if(cb)cb.innerHTML=c.html; if(vb)vb.innerHTML=v.html;
+  if(tcl)tcl.textContent='Capital: R$'+capitalPorLado.toLocaleString('pt-BR');
+  if(tvl)tvl.textContent='Capital: R$'+capitalPorLado.toLocaleString('pt-BR');
+  const sumEl=document.getElementById('alavSummary');
+  if(sumEl)sumEl.innerHTML=`<div class="metric"><div class="metric-label">Capital total</div><div class="metric-value blue">R$${capital.toLocaleString('pt-BR')}</div></div><div class="metric"><div class="metric-label">Ativos selecionados</div><div class="metric-value">${numFinal}C + ${numFinal}V</div></div><div class="metric"><div class="metric-label">Volume total</div><div class="metric-value orange">R$${(c.totalVol+v.totalVol).toLocaleString('pt-BR',{maximumFractionDigits:0})}</div></div><div class="metric"><div class="metric-label">Sinais fortes</div><div class="metric-value up">${totalF} de ${compra.length+venda.length}</div></div>`;
+};
+
 document.addEventListener('DOMContentLoaded',function(){
   const cpfInput=document.getElementById('reg-cpf');
   if(cpfInput)cpfInput.addEventListener('input',function(e){
