@@ -731,8 +731,10 @@ window.showSubPanel = function showSubPanel(panel, btn) {
   if (btn) btn.classList.add('active');
   if (panel === 'alavancagem') {
     setTimeout(function() {
-      if (window.carregarAlavancagemFirebase) window.carregarAlavancagemFirebase();
-    }, 100);
+      if (typeof window.carregarAlavancagemFirebase === 'function') {
+        window.carregarAlavancagemFirebase();
+      }
+    }, 300);
   }
 }
 window.showSubPanelRaw = function showSubPanelRaw(panel) {
@@ -967,7 +969,7 @@ function renderRanking(rankData){
   document.getElementById('countVenda').textContent=venda.length;
   renderTblAll(dados);
   // Atualiza aba de alavancagem automaticamente
-  window.rankingGlobal = rankData; if (typeof abrirAlavancagem === "function") abrirAlavancagem(rankData);
+  window.rankingGlobal = rankData; 
 }
 function hideAdminMsgs(){['admin-err','admin-warn','admin-info'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});}
 function showAdminMsg(type,msg){const map={err:'admin-err',warn:'admin-warn',info:'admin-info'};const el=document.getElementById(map[type]);if(!el)return;el.textContent=msg;el.style.display='block';}
@@ -1090,7 +1092,7 @@ window.adminPublicar = async function() {
     localStorage.setItem('tia_ranking_cache', JSON.stringify(rankData));
     renderRanking(rankData);
     updateAdminStats();
-    if (typeof abrirAlavancagem === 'function') abrirAlavancagem(rankData);
+    
   } catch(e){ showAdminMsg('err','Erro ao publicar: '+e.message); }
 }
 
@@ -1146,18 +1148,26 @@ window.updateAdminStats = async function(){
 
 // Carregar alavancagem direto do Firebase quando necessario
 window.carregarAlavancagemFirebase = async function() {
+  const loading = document.getElementById('alav-loading');
+  const noData  = document.getElementById('alav-no-data');
+  const alvContent = document.getElementById('alav-content');
+  if (loading) loading.style.display = 'block';
+  if (noData)  noData.style.display  = 'none';
+  if (alvContent) alvContent.style.display = 'none';
   try {
     const snap = await getDoc(doc(db,'ranking','atual'));
+    if (loading) loading.style.display = 'none';
     if (snap.exists()) {
       const rd = snap.data();
       window.rankingGlobal = rd;
-      localStorage.setItem('tia_ranking_cache', JSON.stringify(rd));
-      if (typeof abrirAlavancagem === 'function') abrirAlavancagem(rd);
+      if (alvContent) alvContent.style.display = 'block';
+      if (typeof calcularAlavancagem === 'function') calcularAlavancagem();
     } else {
-      document.getElementById('alav-no-data').style.display = 'block';
-      document.getElementById('alav-content').style.display = 'none';
+      if (noData) noData.style.display = 'block';
     }
   } catch(e) {
+    if (loading) loading.style.display = 'none';
+    if (noData)  noData.style.display  = 'block';
     console.error('Erro ao carregar alavancagem:', e);
   }
 }
