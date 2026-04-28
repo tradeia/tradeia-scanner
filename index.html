@@ -740,7 +740,11 @@ window.showSubPanel = function showSubPanel(panel, btn) {
   showSubPanelRaw(panel);
   document.querySelectorAll('.app-tab').forEach(t => t.classList.remove('active'));
   if (btn) btn.classList.add('active');
-  if (panel === 'alavancagem') abrirAlavancagem(window.rankingGlobal);
+  if (panel === 'alavancagem') {
+    let rd = window.rankingGlobal;
+    if (!rd) { try { const c = localStorage.getItem('tia_ranking_cache'); if(c) rd = JSON.parse(c); } catch(e){} }
+    abrirAlavancagem(rd);
+  }
 }
 window.showSubPanelRaw = function showSubPanelRaw(panel) {
   document.querySelectorAll('.sub-panel').forEach(p => p.classList.remove('active'));
@@ -1094,6 +1098,7 @@ window.adminPublicar = async function() {
     await setDoc(doc(db,'ranking','atual'),rankData);
     showAdminMsg('info','✅ Ranking publicado! '+dados.length+' ações — '+dados.filter(r=>r.score>=60).length+' compra / '+dados.filter(r=>r.score<=40).length+' venda.');
     window.rankingGlobal = rankData;
+    localStorage.setItem('tia_ranking_cache', JSON.stringify(rankData));
     renderRanking(rankData);
     updateAdminStats();
     if (typeof abrirAlavancagem === 'function') abrirAlavancagem(rankData);
